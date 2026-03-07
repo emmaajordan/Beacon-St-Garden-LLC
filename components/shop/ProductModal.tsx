@@ -136,7 +136,7 @@ export default function ProductModal({
             )}
 
 
-          {/* care info — only shows if the field exists */}
+          {/* care info*/}
           {(sunlight || water || soil || careNotes) && (
             <div className="mb-4 space-y-2">
               {sunlight && (

@@ -95,10 +95,10 @@ export default function ProductCard({
             )}
           </p>
 
-          {/*stock warning: only when item is in cart AND stock is low */}
+          {/*stock warning*/}
           {/*TO CHANGE WHEN WARNING SHOWS, CHANGE THE NUMBER AFTER STOCK <= BELOW*/}
           <div className="h-4 mb-1">
-            {quantity > 0 && stock <= 5 && (
+            {stock != 0 && stock <= 5 && (
               <p className="text-xs text-[var(--rust)]">Only {stock} left!</p>
             )}
           </div>

@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ShoppingCart } from 'lucide-react'; //shopping cart icon
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useCartStore } from '@/lib/store/cartStore';
+import { createClient } from '@/lib/supabase/client';
 
 
 export default function Navigation() {
@@ -22,6 +24,24 @@ export default function Navigation() {
         state.items.reduce((sum, i) => sum + i.quantity, 0)
     );
 
+    const [isAdmin, setIsAdmin] = useState(false);
+    const supabase = createClient();
+
+    useEffect(() => {
+    const checkUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAdmin(!!user);
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsAdmin(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+    }, []);
+
     return (
         <nav className="sticky top-0 z-50 bg-[var(--header)] border-b border-gray-200 shadow-sm h-[60px]">
             <div className="mx-auto px-8 py-4 h-full flex items-center">
@@ -36,6 +56,12 @@ export default function Navigation() {
 
                 {/*nav links*/}
                 <div className="flex items-center gap-8">
+                    {isAdmin && (
+                    <Link href="/admin" className="text-[var(--rust)] font-medium text-base transition-colors hover:opacity-80">
+                        Admin
+                    </Link>
+                    )}
+
                     {navLinks.map((link) => (
                     <Link key={link.href} href={link.href} className={`relative text-base font-medium transition-colors ${pathname === link.href ? 'text-[var(--rust)] ' : 'text-[var(--text)] hover:text-[var(--rust)]'}`}>
                         {link.label}
