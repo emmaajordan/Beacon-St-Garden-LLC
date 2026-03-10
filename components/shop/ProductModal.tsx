@@ -11,34 +11,49 @@ interface ProductModalProps {
   image_url: string;
   availability: "Ready Now" | "Coming Soon" | "Out of Stock";
   stock: number;
+  description?: string;
+  category?: string;
+  sun?: string;
+  light?: string;
+  watering?: string;
+  soil?: string[];
+  ph_min?: number;
+  ph_max?: number;
+  spacing?: string;
+  height?: string;
+  life_span?: string;
+  care_notes?: string;
   quantity: number;
   onClose: () => void;
   onReserve: () => void;
   onIncrease: () => void;
   onDecrease: () => void;
-  sunlight?: string;
-  water?: string;
-  careNotes?: string;
-  soil?: string;
-  description?: string;
 }
 
 export default function ProductModal({
+  id,
   name,
   price,
   image_url,
   availability,
   stock,
+  description,
+  category,
+  sun,
+  light,
+  watering,
+  soil,
+  ph_min,
+  ph_max,
+  spacing,
+  height,
+  life_span,
+  care_notes,
   quantity,
   onClose,
   onReserve,
   onIncrease,
   onDecrease,
-  sunlight,
-  water,
-  careNotes,
-  soil,
-  description,
 }: ProductModalProps) {
   const isAvailable = availability === "Ready Now" && stock > 0;
   const displayAvailability = stock === 0 ? "Out of Stock" : availability;
@@ -128,45 +143,102 @@ export default function ProductModal({
 
           {/* divider */}
           <div className="border-t border-[var(--card-border)] mb-4" />
-            {/* description */}
-            {description && (
-              <p className="text-sm text-[var(--input-border)] italic mb-4">
-                {description}
-              </p>
-            )}
+          {/* description */}
+          {description && (
+            <p className="text-sm text-[var(--input-border)] italic mb-4">
+              {description}
+            </p>
+          )}
 
-
-          {/* care info*/}
-          {(sunlight || water || soil || careNotes) && (
+          {/* care info */}
+          {(sun ||
+            light ||
+            watering ||
+            soil ||
+            ph_min ||
+            ph_max ||
+            spacing ||
+            height ||
+            life_span ||
+            care_notes) && (
             <div className="mb-4 space-y-2">
-              {sunlight && (
+              {category && (
+                <div className="flex items-center gap-2 text-sm text-[var(--text)]">
+                  <span className="text-base">🪴</span>
+                  <span className="font-medium">Category:</span>
+                  <span>{category}</span>
+                </div>
+              )}
+              {life_span && (
+                <div className="flex items-center gap-2 text-sm text-[var(--text)]">
+                  <span className="text-base">♻︎</span>
+                  <span className="font-medium">Life Span:</span>
+                  <span>{life_span}</span>
+                </div>
+              )}
+              {sun && (
                 <div className="flex items-center gap-2 text-sm text-[var(--text)]">
                   <span className="text-base">☀︎</span>
-                  <span className="font-medium px-0.75">Sunlight:</span>
-                  <span>{sunlight}</span>
+                  <span className="font-medium">Sun:</span>
+                  <span>{sun}</span>
                 </div>
               )}
-              {water && (
+              {light && (
                 <div className="flex items-center gap-2 text-sm text-[var(--text)]">
-                  <span className="text-base">🌨</span>
-                  <span className="font-medium">Water:</span>
-                  <span>{water}</span>
+                  <span className="text-base">💡</span>
+                  <span className="font-medium">Light:</span>
+                  <span>{light}</span>
                 </div>
               )}
-              {soil && (
+              {watering && (
                 <div className="flex items-center gap-2 text-sm text-[var(--text)]">
-
-                  <Image src='/sprout_info.png' alt='soil icon' width={15} height={15}/>
-                  <span className="font-medium px-0.5">Soil:</span>
-                  <span>{soil}</span>
+                  <span className="text-base">💧</span>
+                  <span className="font-medium">Watering:</span>
+                  <span>{watering}</span>
                 </div>
               )}
-              {careNotes && (
-                <div
-                  className={`pt-1 text-sm text-[var(--text)] ${!sunlight && !water ? "" : "border-t border-[var(--card-border)] pt-4 "}`}
-                >
+              {soil && soil.length > 0 && (
+                <div className="flex items-start gap-2 text-sm text-[var(--text)]">
+                  <Image
+                    src="/sprout_info.png"
+                    alt="soil icon"
+                    width={15}
+                    height={15}
+                    className="mt-0.5 flex-shrink-0"
+                  />
+                  <span className="font-medium">Soil:</span>
+                  <span>{soil.join(", ")}</span>
+                </div>
+              )}
+              {(ph_min || ph_max) && (
+                <div className="flex items-center gap-2 text-sm text-[var(--text)]">
+                  <span className="text-base">⚗︎</span>
+                  <span className="font-medium">pH:</span>
+                  <span>
+                    {ph_min && ph_max
+                      ? `${ph_min} – ${ph_max}`
+                      : (ph_min ?? ph_max)}
+                  </span>
+                </div>
+              )}
+              {spacing && (
+                <div className="flex items-center gap-2 text-sm text-[var(--text)]">
+                  <span className="text-base">↔︎</span>
+                  <span className="font-medium">Spacing:</span>
+                  <span>{spacing}</span>
+                </div>
+              )}
+              {height && (
+                <div className="flex items-center gap-2 text-sm text-[var(--text)]">
+                  <span className="text-base">↕︎</span>
+                  <span className="font-medium">Height:</span>
+                  <span>{height}</span>
+                </div>
+              )}
+              {care_notes && (
+                <div className="border-t border-[var(--card-border)] pt-3 text-sm text-[var(--text)]">
                   <span className="font-medium">Care notes: </span>
-                  {careNotes}
+                  {care_notes}
                 </div>
               )}
             </div>

@@ -1,45 +1,43 @@
-'use client';
+"use client";
 
-import ProductCard from '@/components/shop/ProductCard';
-import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase/supabase';
-import { Loader2 } from 'lucide-react'
+import ProductCard from "@/components/shop/ProductCard";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase/supabase";
+import { Loader2 } from "lucide-react";
 
 export default function ShopPage() {
-const [allProducts, setAllProducts] = useState<any[]>([]);
-const [loading, setLoading] = useState(true);
-
-
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const searchParams = useSearchParams();
 
   // filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-      const category = searchParams.get('category');
-      return category ? [category] : [];
-  });  
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedAvailability, setSelectedAvailability] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
+    const category = searchParams.get("category");
+    return category ? [category] : [];
+  });
+
+  const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
+    [],
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
 
   // toggle filter selections
   const toggleCategory = (category: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
-    );
-  };
-
-  const toggleType = (type: string) => {
-    setSelectedTypes(prev =>
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category],
     );
   };
 
   const toggleAvailability = (availability: string) => {
-    setSelectedAvailability(prev =>
-      prev.includes(availability) ? prev.filter(a => a !== availability) : [...prev, availability]
+    setSelectedAvailability((prev) =>
+      prev.includes(availability)
+        ? prev.filter((a) => a !== availability)
+        : [...prev, availability],
     );
   };
 
@@ -50,48 +48,54 @@ const [loading, setLoading] = useState(true);
 
     // apply a category filter
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter(p => selectedCategories.includes(p.category));
-    }
-
-    // apply type filter
-    if (selectedTypes.length > 0) {
-     filtered = filtered.filter(p => p.types.some((t: string) => selectedTypes.includes(t)));
+      filtered = filtered.filter((p) =>
+        selectedCategories.includes(p.category),
+      );
     }
 
     // apply availability filter
     if (selectedAvailability.length > 0) {
-      filtered = filtered.filter(p => selectedAvailability.includes(p.availability));
+      filtered = filtered.filter((p) =>
+        selectedAvailability.includes(p.availability),
+      );
     }
 
     // apply search
     if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
     // apply sorting
     const sorted = [...filtered];
     switch (sortBy) {
-      case 'price-low':
+      case "price-low":
         sorted.sort((a, b) => a.price - b.price);
         break;
-      case 'price-high':
+      case "price-high":
         sorted.sort((a, b) => b.price - a.price);
         break;
-      case 'a-z':
+      case "a-z":
         sorted.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case 'newest':
+      case "newest":
       default:
-        sorted.sort((a, b) => 
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        sorted.sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
         );
         break;
     }
 
     return sorted;
-  }, [allProducts,selectedCategories, selectedTypes, selectedAvailability, searchQuery, sortBy]);
+  }, [
+    allProducts,
+    selectedCategories,
+    selectedAvailability,
+    searchQuery,
+    sortBy,
+  ]);
 
   // pagination setup
   const itemsPerPage = 10;
@@ -102,48 +106,48 @@ const [loading, setLoading] = useState(true);
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
   useEffect(() => {
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('showing', true)
-      .order('created_at', { ascending: false });
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("showing", true)
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error('Error fetching products:', error);
-    } else {
-      setAllProducts(data || []);
-      setCurrentPage(1);
-    }
-    setLoading(false);
-  };
+      if (error) {
+        console.error("Error fetching products:", error);
+      } else {
+        setAllProducts(data || []);
+        setCurrentPage(1);
+      }
+      setLoading(false);
+    };
 
-  fetchProducts();
-}, []);
-
+    fetchProducts();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--header)]">
       {/*hero section*/}
-        <section className="relative h-64 bg-[var(--footer)]">
+      <section className="relative h-64 bg-[var(--footer)]">
         {/*background image*/}
         <div className="absolute inset-0 bg-green-950 opacity-75" />
-        
+
         {/*overlay card*/}
         <div className="relative h-full mx-auto px-8 flex items-center">
-            <div className="bg-[var(--hero-square)] backdrop-blur-sm p-5 max-w-lg">
-                <div className="border border-[var(--lines)] p-5">
-                    <h1 className="text-3xl font-semibold text-[var(--text)] mb-2">
-                        Shop Beacon Street Gardens
-                    </h1>
-                    <p className="text-base text-[var(--text)]">
-                        Reserve fresh vegetables, herbs, and flowers<br />
-                        fresh from our garden. (probably change. just a placeholder)
-                    </p>
-                </div>
+          <div className="bg-[var(--hero-square)] backdrop-blur-sm p-5 max-w-lg">
+            <div className="border border-[var(--lines)] p-5">
+              <h1 className="text-3xl font-semibold text-[var(--text)] mb-2">
+                Shop Beacon Street Gardens
+              </h1>
+              <p className="text-base text-[var(--text)]">
+                Reserve fresh vegetables, herbs, and flowers
+                <br />
+                fresh from our garden. (probably change. just a placeholder)
+              </p>
             </div>
+          </div>
         </div>
-        </section>
+      </section>
 
       {/*main shop*/}
       <div className="mx-auto px-8 py-8">
@@ -157,11 +161,23 @@ const [loading, setLoading] = useState(true);
 
               {/*category*/}
               <div className="mb-5">
-                <h4 className="font-medium text-[var(--text)] mb-2 text-sm">Category</h4>
+                <h4 className="font-medium text-[var(--text)] mb-2 text-sm">
+                  Category
+                </h4>
                 <div className="space-y-1.5">
-                  {/*TO ADD MORE CATEGORIES, ADD TO LIST BELOW*/} 
-                  {['Vegetables', 'Plants', 'Flowers'].map(category => (
-                    <label key={category} className="flex items-center gap-2 cursor-pointer hover:text-[var(--rust)] transition-colors">
+                  {/*TO ADD MORE CATEGORIES, ADD TO LIST BELOW*/}
+                  {[
+                    "Vegetable/Fruit",
+                    "Herbs",
+                    "Flowers",
+                    "Annual",
+                    "Perennial",
+                    "House Plant",
+                  ].map((category) => (
+                    <label
+                      key={category}
+                      className="flex items-center gap-2 cursor-pointer hover:text-[var(--rust)] transition-colors"
+                    >
                       <input
                         type="checkbox"
                         className="w-4 h-4 accent-[var(--teal)] cursor-pointer"
@@ -174,32 +190,18 @@ const [loading, setLoading] = useState(true);
                 </div>
               </div>
 
-              {/*type*/}
-              <div className="mb-5">
-                <h4 className="font-medium text-[var(--text)] mb-2 text-sm">Type</h4>
-                <div className="space-y-1.5">
-                  {/*TO ADD MORE TYPES, ADD TO LIST BELOW*/} 
-                  {['Shade', 'Partial Shade', 'Full Sun', 'Seedlings'].map(type => (
-                    <label key={type} className="flex items-center gap-2 cursor-pointer hover:text-[var(--rust)] transition-colors">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 accent-[var(--teal)] cursor-pointer"
-                        checked={selectedTypes.includes(type)}
-                        onChange={() => toggleType(type)}
-                      />
-                      <span className="text-sm">{type}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
               {/*availability*/}
               <div className="mb-5">
-                <h4 className="font-medium text-[var(--text)] mb-2 text-sm">Availability</h4>
+                <h4 className="font-medium text-[var(--text)] mb-2 text-sm">
+                  Availability
+                </h4>
                 <div className="space-y-1.5">
-                  {/*TO ADD DIFFERENT AVAILABILITY, ADD TO LIST BELOW*/} 
-                  {['Ready Now', 'Coming Soon'].map(availability => (
-                    <label key={availability} className="flex items-center gap-2 cursor-pointer hover:text-[var(--rust)] transition-colors">
+                  {/*TO ADD DIFFERENT AVAILABILITY, ADD TO LIST BELOW*/}
+                  {["Ready Now", "Coming Soon"].map((availability) => (
+                    <label
+                      key={availability}
+                      className="flex items-center gap-2 cursor-pointer hover:text-[var(--rust)] transition-colors"
+                    >
                       <input
                         type="checkbox"
                         className="w-4 h-4 accent-[var(--teal)] cursor-pointer"
@@ -213,12 +215,11 @@ const [loading, setLoading] = useState(true);
               </div>
 
               {/*clears all filters*/}
-              <button 
+              <button
                 onClick={() => {
                   setSelectedCategories([]);
-                  setSelectedTypes([]);
                   setSelectedAvailability([]);
-                  setSearchQuery('');
+                  setSearchQuery("");
                 }}
                 className="w-full bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white py-2 px-4 rounded-md transition-colors font-medium text-sm"
               >
@@ -242,12 +243,11 @@ const [loading, setLoading] = useState(true);
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-[var(--text)]">
-                  {filteredProducts.length > 0 
+                  {filteredProducts.length > 0
                     ? `Showing ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} of ${filteredProducts.length} Products`
-                    : ''
-                  }
-                </span>            
-                <select 
+                    : ""}
+                </span>
+                <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="px-4 py-2 bg-transparent border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)] cursor-pointer"
@@ -264,7 +264,10 @@ const [loading, setLoading] = useState(true);
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {loading ? (
                 <div className="col-span-5 flex items-center justify-center py-12">
-                  <Loader2 size={32} className="animate-spin text-[var(--teal)]" />
+                  <Loader2
+                    size={32}
+                    className="animate-spin text-[var(--teal)]"
+                  />
                 </div>
               ) : (
                 currentProducts.map((product) => (
@@ -276,13 +279,14 @@ const [loading, setLoading] = useState(true);
             {/*no results*/}
             {!loading && filteredProducts.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-lg text-[var(--text)]">No products found matching your filters.</p>
+                <p className="text-lg text-[var(--text)]">
+                  No products found matching your filters.
+                </p>
                 <button
                   onClick={() => {
                     setSelectedCategories([]);
-                    setSelectedTypes([]);
                     setSelectedAvailability([]);
-                    setSearchQuery('');
+                    setSearchQuery("");
                   }}
                   className="mt-4 text-[var(--rust)] hover:underline"
                 >
@@ -295,24 +299,30 @@ const [loading, setLoading] = useState(true);
             {!loading && filteredProducts.length > 0 && (
               <div className="flex items-center justify-center gap-4 mt-8">
                 <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                   className={`px-4 py-2 transition-colors ${
                     currentPage === 1
-                      ? 'text-transparent'
-                      : 'text-[var(--text)] hover:text-[var(--rust)]'
+                      ? "text-transparent"
+                      : "text-[var(--text)] hover:text-[var(--rust)]"
                   }`}
                 >
                   ←
                 </button>
-                <span className="text-[var(--text)]">{currentPage} / {totalPages}</span>
+                <span className="text-[var(--text)]">
+                  {currentPage} / {totalPages}
+                </span>
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className={`px-4 py-2 transition-colors ${
                     currentPage === totalPages
-                      ? 'text-transparent'
-                      : 'text-[var(--text)] hover:text-[var(--rust)]'
+                      ? "text-transparent"
+                      : "text-[var(--text)] hover:text-[var(--rust)]"
                   }`}
                 >
                   →

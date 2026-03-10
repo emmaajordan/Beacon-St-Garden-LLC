@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import ProductModal from "./ProductModal";
+import { useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/store/cartStore";
 
 interface ProductCardProps {
@@ -12,11 +11,23 @@ interface ProductCardProps {
   image_url: string;
   availability: "Ready Now" | "Coming Soon" | "Out of Stock";
   stock: number;
-  sunlight?: string;
-  water?: string;
-  careNotes?: string;
-  soil?: string;
   description?: string;
+  category?: string;
+  sun?: string;
+  light?: string;
+  watering?: string;
+  soil?: string[];
+  ph_min?: number;
+  ph_max?: number;
+  spacing?: string;
+  height?: string;
+  life_span?: string;
+  care_notes?: string;
+  quantity: number;
+  onClose: () => void;
+  onReserve: () => void;
+  onIncrease: () => void;
+  onDecrease: () => void;
 }
 
 export default function ProductCard({
@@ -26,16 +37,23 @@ export default function ProductCard({
   image_url,
   availability,
   stock,
-  sunlight,
-  water,
-  careNotes,
-  soil,
   description,
+  category,
+  sun,
+  light,
+  watering,
+  soil,
+  ph_min,
+  ph_max,
+  spacing,
+  height,
+  life_span,
+  care_notes,
 }: ProductCardProps) {
   const { items, addItem, updateQuantity } = useCartStore();
   const cartItem = items.find((i) => i.id === id);
   const quantity = cartItem?.quantity ?? 0;
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   const handleReserve = () => addItem({ id, name, price, image_url, stock });
   const handleIncrease = () => updateQuantity(id, quantity + 1);
@@ -54,7 +72,11 @@ export default function ProductCard({
     <>
       <div
         className="bg-[var(--card-bg)] rounded-lg border border-[var(--card-border)] shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer"
-        onClick={() => setIsModalOpen(true)}
+        onClick={() =>
+          router.push(
+            `/shop/${id}?${new URLSearchParams(window.location.search)}`,
+          )
+        }
       >
         {/* image */}
         <div className="relative h-48 bg-[var(--card-border)]">
@@ -64,6 +86,8 @@ export default function ProductCard({
               alt={name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRDZDRkNDIi8+PC9zdmc+"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -152,27 +176,6 @@ export default function ProductCard({
           )}
         </div>
       </div>
-
-      {isModalOpen && (
-        <ProductModal
-          id={id}
-          name={name}
-          price={price}
-          image_url={image_url}
-          availability={availability}
-          stock={stock}
-          quantity={quantity}
-          onClose={() => setIsModalOpen(false)}
-          onReserve={handleReserve}
-          onIncrease={handleIncrease}
-          onDecrease={handleDecrease}
-          sunlight={sunlight}
-          water={water}
-          careNotes={careNotes}
-          soil={soil}
-          description={description}
-        />
-      )}
     </>
   );
 }
