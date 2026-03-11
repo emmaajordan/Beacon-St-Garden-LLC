@@ -1,7 +1,8 @@
 'use client'
+import Link from 'next/link';
 import { useState } from 'react';
 import { Instagram } from 'lucide-react';
-import { Bird } from 'lucide-react';
+import { Sprout } from 'lucide-react';
 import { CircleAlert } from 'lucide-react';
 
 
@@ -23,42 +24,58 @@ export default function ContactPage() {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userMessage, setUserMessage] = useState("");
-  const [popupMessage, setPopupMessage] = useState("");
+  const [errMessage, setErrMessage] = useState("");
   const [err, setErr] = useState(false);
   const [submitted, setSubmittted] = useState(false);
   const emailRegex = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
   /* TODO: Handle form submission
      - use Web3Forms to send email?
+     - loading icon during api calls
   */
   const handleSubmit = (event) => {
     event.preventDefault();
     if (userName.length === 0 || userEmail.length === 0 || userMessage.length === 0){
-      setSubmittted(false);
-      setPopupMessage("Please fill out all fields");
+      // setSubmittted(false);
+      setErrMessage("Please fill out all fields");
       setErr(true);
     }
     else if (!emailRegex.test(userEmail)){
-      setSubmittted(false);
-      setPopupMessage("Please enter a valid email address");
+      
+      setErrMessage("Please enter a valid email address");
       setErr(true);
     }
     else{
       setErr(false);
       event.target.reset();
-      setUserName("");
-      setUserEmail("");
-      setUserMessage("");
-      setPopupMessage("Message Sent");
       setSubmittted(true);
-      // setSubmitMsg(true);
-      // const timeoutID = setTimeout(() => {
-      //   setSubmitMsg(false), 3000
-      // })
-      // clearTimeout(timeoutID);
-      // alert("form submitted");
     }
-  }
+  };
+
+  const exitSubmit = () => {
+    setUserName("");
+    setUserEmail("");
+    setUserMessage("");
+    setSubmittted(false);
+  };
+
+  // confirmation screen
+    if (submitted) {
+      return (
+        <div className="min-h-screen bg-[var(--header)] flex flex-col items-center justify-center px-8">
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-10 max-w-md w-full text-center shadow-sm">
+            <div className="flex justify-center mb-4">
+              <Sprout size={40} className="text-[var(--teal)]" />
+            </div>
+            <h2 className="text-2xl font-semibold text-[var(--text)] mb-2">Message Sent!</h2>
+            <p className="text-sm text-[var(--text)] mb-4">Thanks for reaching out, we'll review your message soon.</p>
+            <button onClick={exitSubmit} className="bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white px-6 py-2.5 rounded-md transition-colors font-medium text-sm">
+              Back
+            </button>
+          </div>
+        </div>
+      );
+    }
 
   return (
     <div className="bg-(--header)">
@@ -104,18 +121,12 @@ export default function ContactPage() {
               className={`${contactStyles.input} resize-none`}>
             </textarea>
 
-            {/* Submission result message */}
+            {/* Error message */}
             <div className="flex h-10 items-center">
               {err && 
                 <span className="flex items-center gap-1">
                   <CircleAlert size={20} color="var(--rust)"/>
-                  <p className="text-(--rust) font-medium">{popupMessage}</p>
-                </span>
-              }
-              {submitted && 
-                <span className="flex items-center gap-1">
-                  <Bird size={20} color="var(--teal)"/>
-                  <p className="text-(--teal) font-semibold">{popupMessage}</p>
+                  <p className="text-(--rust) font-medium">{errMessage}</p>
                 </span>
               }
             </div>
