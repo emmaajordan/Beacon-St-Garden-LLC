@@ -83,7 +83,7 @@ function ProductPageContent() {
           Back to Shop
         </Link>
 
-        {/* mobile only — name above image */}
+        {/* mobile only*/}
         <div className="sm:hidden mb-4">
           <p className="text-xs uppercase tracking-widest text-[var(--input-border)] mb-2">
             {product.category ?? "From the Garden"}

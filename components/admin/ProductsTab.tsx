@@ -675,12 +675,12 @@ function ProductRow({
           </p>
         </div>
 
-        {/* price — hidden on mobile */}
+        {/* price*/}
         <div className="hidden sm:block text-sm text-[var(--text)] w-16 text-right flex-shrink-0">
           {product.price > 0 ? `$${parseFloat(product.price).toFixed(2)}` : "—"}
         </div>
 
-        {/* stock — hidden on mobile */}
+        {/* stock*/}
         <div className="hidden sm:block text-sm w-16 text-center flex-shrink-0">
           <span
             className={
@@ -691,7 +691,7 @@ function ProductRow({
           </span>
         </div>
 
-        {/* availability — hidden below md */}
+        {/* availability*/}
         <div className="hidden md:block flex-shrink-0">
           <span
             className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -704,7 +704,7 @@ function ProductRow({
           </span>
         </div>
 
-        {/* visible — hidden below md */}
+        {/* visible */}
         <div className="hidden md:flex flex-shrink-0 text-xs text-[var(--input-border)]">
           {product.showing ? (
             <span className="flex items-center gap-1">
@@ -717,7 +717,6 @@ function ProductRow({
           )}
         </div>
 
-        {/* chevron */}
         <div className="flex-shrink-0 text-[var(--input-border)]">
           {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>

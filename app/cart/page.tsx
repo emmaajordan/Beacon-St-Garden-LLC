@@ -1,67 +1,181 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
-import { X, Info, Snail } from 'lucide-react';
-import { useCartStore } from '@/lib/store/cartStore';
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { X, Info, Snail, Loader2 } from "lucide-react";
+import { useCartStore } from "@/lib/store/cartStore";
+import { supabase } from "@/lib/supabase/supabase";
 
-
-
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function CartPage() {
-  
   const [dayTimes, setDayTimes] = useState<Record<string, string>>({});
-  const [contactPreference, setContactPreference] = useState<string[]>([]);
-  const [form, setForm] = useState({ name: '', email: '', phone: '' });
-  const [orderNotes, setOrderNotes] = useState('');
+  const [form, setForm] = useState({ name: "", email: "" });
+  const [orderNotes, setOrderNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const { items: cartItems, removeItem, updateQuantity, clearCart } = useCartStore();
+  const {
+    items: cartItems,
+    removeItem,
+    updateQuantity,
+    clearCart,
+  } = useCartStore();
 
   const selectedDays = Object.keys(dayTimes);
-  const canSubmit = form.name && (form.email || form.phone);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const canSubmit =
+    form.name &&
+    form.email &&
+    emailRegex.test(form.email) &&
+    cartItems.length > 0;
 
   const toggleDay = (day: string) => {
-    setDayTimes(prev => {
+    setDayTimes((prev) => {
       if (day in prev) {
         const next = { ...prev };
         delete next[day];
         return next;
       }
-      return { ...prev, [day]: '' };
+      return { ...prev, [day]: "" };
     });
   };
 
   const updateDayTime = (day: string, value: string) => {
-    setDayTimes(prev => ({ ...prev, [day]: value }));
-  };
-
-  const toggleContact = (method: string) => {
-      setContactPreference(prev =>
-    prev.includes(method) ? [] : [method]
-  );
+    setDayTimes((prev) => ({ ...prev, [day]: value }));
   };
 
   const handleQuantityChange = (id: string, delta: number) => {
-    const item = cartItems.find(i => i.id === id);
+    const item = cartItems.find((i) => i.id === id);
     if (item) updateQuantity(id, item.quantity + delta);
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [stockError, setStockError] = useState<string[]>([]);
+
+  const handleSubmit = async () => {
     if (!canSubmit) return;
-    clearCart();
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      // build items list — only include products with a real id
+      const stockItems = cartItems
+        .filter((item) => item.id)
+        .map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity,
+        }));
+      console.log("stock items being sent:", stockItems);
+
+      // atomically check and decrement stock
+      const { data: stockResult, error: stockError } = await supabase.rpc(
+        "reserve_stock",
+        { items: stockItems },
+      );
+      console.log("stock result:", stockResult);
+      console.log("stock error:", stockError);
+      console.log("raw stock result:", JSON.stringify(stockResult));
+      console.log("success value:", stockResult?.success);
+      console.log("success type:", typeof stockResult?.success);
+
+      if (stockError) throw new Error(stockError.message);
+
+      if (!stockResult || stockResult.success === false) {
+        const errors = stockResult.errors as any[];
+
+        const messages = errors.map((e: any) => {
+          if (e.available === 0) {
+            return `${e.product_name} is out of stock and has been removed from your cart`;
+          }
+          return `Only ${e.available} of ${e.product_name} available. Your cart has been updated`;
+        });
+
+        setStockError(messages);
+        setSubmitting(false);
+
+        errors.forEach((e: any) => {
+          if (e.available === 0) {
+            removeItem(e.product_id);
+          } else {
+            updateQuantity(e.product_id, e.available);
+          }
+        });
+
+        return;
+      }
+
+      console.log("reached reservation insert");
+      // save reservation to supabase
+      const { data: reservation, error: reservationError } = await supabase
+        .from("reservations")
+        .insert({
+          name: form.name,
+          email: form.email || null,
+          order_notes: orderNotes || null,
+          availability: dayTimes,
+          status: "unconfirmed",
+          final_cost: subtotal,
+        })
+        .select()
+        .single();
+
+      if (reservationError) throw new Error(reservationError.message);
+
+      // save reservation items
+      const { error: itemsError } = await supabase
+        .from("reservation_items")
+        .insert(
+          cartItems.map((item) => ({
+            reservation_id: reservation.id,
+            product_id: item.id,
+            product_name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        );
+
+      if (itemsError) throw new Error(itemsError.message);
+
+      // send confirmation email
+      if (form.email) {
+        await fetch("/api/send-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            items: cartItems,
+            orderNotes,
+            availability: dayTimes,
+          }),
+        });
+      }
+
+      clearCart();
+      setSubmitted(true);
+    } catch (err: any) {
+      setSubmitError("Something went wrong. Please try again.");
+      console.error(err);
+    }
+
+    setSubmitting(false);
   };
 
   // empty cart state
-  if (cartItems.length === 0 && !submitted) {
+  if (cartItems.length === 0 && !submitted && stockError.length === 0) {
     return (
       <div className="min-h-screen bg-[var(--header)] flex flex-col items-center justify-center gap-4">
         <p className="text-xl text-[var(--text)]">Your cart is empty.</p>
-        <Link href="/shop" className="bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white px-6 py-2.5 rounded-md transition-colors font-medium">
+        <Link
+          href="/shop"
+          className="bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white px-6 py-2.5 rounded-md transition-colors font-medium"
+        >
           Browse Products
         </Link>
       </div>
@@ -76,13 +190,20 @@ export default function CartPage() {
           <div className="flex justify-center mb-4">
             <Snail size={40} className="text-[var(--teal)]" />
           </div>
-          <h2 className="text-2xl font-semibold text-[var(--text)] mb-2">Reservation Received!</h2>
-          <p className="text-sm text-[var(--text)] mb-1">Thanks, {form.name}.</p>
-          <p className="text-sm text-[var(--text)] mb-6">
-            A confirmation has been sent to you. We'll reach out via{' '}
-            {contactPreference[0] === 'Either' ? 'phone or email' : contactPreference[0]?.toLowerCase() || 'phone or email'} to finalize your pickup time.
+          <h2 className="text-2xl font-semibold text-[var(--text)] mb-2">
+            Reservation Received!
+          </h2>
+          <p className="text-sm text-[var(--text)] mb-1">
+            Thanks, {form.name}.
           </p>
-          <Link href="/shop" className="bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white px-6 py-2.5 rounded-md transition-colors font-medium text-sm">
+          <p className="text-sm text-[var(--text)] mb-6">
+            A confirmation has been sent to you. <br /> We'll reach out to
+            finalize your pickup time.
+          </p>
+          <Link
+            href="/shop"
+            className="bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white px-6 py-2.5 rounded-md transition-colors font-medium text-sm"
+          >
             Back to Shop
           </Link>
         </div>
@@ -93,87 +214,124 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-[var(--header)]">
       <div className="mx-auto px-8 py-10 max-w-5xl">
-
         {/* page title */}
-        <h1 className="text-3xl font-semibold text-[var(--text)] mb-2 text-center">Cart</h1>
+        <h1 className="text-3xl font-semibold text-[var(--text)] mb-2 text-center">
+          Cart
+        </h1>
         <div className="border-t border-[var(--card-border)] mb-8" />
 
         {/* two column layout */}
         <div className="flex gap-6 items-start">
-
           {/* LEFT — cart items + notice */}
           <div className="w-80 flex-shrink-0 space-y-4">
-
-            {/* cart items */}
-            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-sm overflow-hidden">
-              {cartItems.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center gap-3 p-4 ${index !== cartItems.length - 1 ? 'border-b border-[var(--card-border)]' : ''}`}
+            {cartItems.length === 0 ? (
+              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-sm p-8 flex flex-col items-center text-center gap-4">
+                <p className="text-sm text-[var(--input-border)]">
+                  Your cart is empty.
+                </p>
+                <Link
+                  href="/shop"
+                  className="bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-                  {/* image */}
-                  <div className="relative w-16 h-14 flex-shrink-0 bg-[var(--card-border)] rounded-md overflow-hidden">
-                    {item.image_url ? (
-                      <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Image src="/no_item.svg" alt="No Item" width={28} height={28} className="opacity-40" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* name + price */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-[var(--text)] text-sm truncate">{item.name}</p>
-                    <p className="text-xs text-[var(--input-border)]">${item.price.toFixed(2)} each</p>
-                  </div>
-
-                  {/* quantity adjuster */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => handleQuantityChange(item.id, -1)}
-                      className="w-6 h-6 bg-[var(--button-gray)] hover:bg-[var(--button-gray-hover)] rounded flex items-center justify-center text-sm font-bold text-white transition-colors"
-                    >
-                      −
-                    </button>
-                    <span className="w-5 text-center text-sm font-semibold text-[var(--text)]">{item.quantity}</span>
-                    <button
-                      onClick={() => handleQuantityChange(item.id, 1)}
-                      className="w-6 h-6 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded flex items-center justify-center text-sm font-bold text-white transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  {/* remove */}
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-[var(--input-border)] hover:text-[var(--rust)] transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-
-              {/* subtotal row */}
-              <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--card-border)] bg-[var(--header)]">
-                <span className="font-semibold text-[var(--text)] text-sm">Total</span>
-                <span className="text-lg font-semibold text-[var(--text)]">${subtotal.toFixed(2)}</span>
+                  Browse Products
+                </Link>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* cart items */}
+                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-sm overflow-hidden">
+                  {cartItems.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`flex items-center gap-3 p-4 ${index !== cartItems.length - 1 ? "border-b border-[var(--card-border)]" : ""}`}
+                    >
+                      {/* image */}
+                      <div className="relative w-16 h-14 flex-shrink-0 bg-[var(--card-border)] rounded-md overflow-hidden">
+                        {item.image_url ? (
+                          <Image
+                            src={item.image_url}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Image
+                              src="/no_item.svg"
+                              alt="No Item"
+                              width={28}
+                              height={28}
+                              className="opacity-40"
+                            />
+                          </div>
+                        )}
+                      </div>
 
-            {/* notice */}
-            <div className="flex items-start gap-2 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg px-4 py-3 text-sm text-[var(--text)]">
-              <Info size={15} className="mt-0.5 flex-shrink-0 text-[var(--teal)]" />
-              <p>Reservation only. Payment due at time of pickup.</p>
-            </div>
+                      {/* name + price */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[var(--text)] text-sm truncate">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-[var(--input-border)]">
+                          ${item.price.toFixed(2)} each
+                        </p>
+                      </div>
 
+                      {/* quantity adjuster */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleQuantityChange(item.id, -1)}
+                          className="w-6 h-6 bg-[var(--button-gray)] hover:bg-[var(--button-gray-hover)] rounded flex items-center justify-center text-sm font-bold text-white transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="w-5 text-center text-sm font-semibold text-[var(--text)]">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => handleQuantityChange(item.id, 1)}
+                          className="w-6 h-6 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded flex items-center justify-center text-sm font-bold text-white transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {/* remove */}
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="text-[var(--input-border)] hover:text-[var(--rust)] transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* subtotal row */}
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--card-border)] bg-[var(--header)]">
+                    <span className="font-semibold text-[var(--text)] text-sm">
+                      Total
+                    </span>
+                    <span className="text-lg font-semibold text-[var(--text)]">
+                      ${subtotal.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* notice */}
+                <div className="flex items-start gap-2 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg px-4 py-3 text-sm text-[var(--text)]">
+                  <Info
+                    size={15}
+                    className="mt-0.5 flex-shrink-0 text-[var(--teal)]"
+                  />
+                  <p>Reservation only. Payment due at time of pickup.</p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* RIGHT — form */}
           <div className="flex-1">
             <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-sm p-6">
-
               {/* your information */}
               <h2 className="text-lg font-semibold text-[var(--text)] mb-5 pb-3 border-b border-[var(--card-border)]">
                 Your Information
@@ -197,36 +355,21 @@ export default function CartPage() {
                 {/* email + phone */}
                 <div>
                   <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                    Email / Phone <span className="text-[var(--rust)]">*</span>
-                    <span className="text-xs font-normal text-[var(--input-border)] ml-1">(at least one required)</span>
+                    Email <span className="text-[var(--rust)]">*</span>
+                    <span className="text-xs font-normal text-[var(--input-border)] ml-1">
+                      {" "}
+                    </span>
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)]"
-                      placeholder="you@email.com"
-                    />
-                    <input
-                      type="tel"
-                      value={form.phone}
-                      onChange={(e) => {
-                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        let formatted = digits;
-                        if (digits.length >= 7) {
-                          formatted = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
-                        } else if (digits.length >= 4) {
-                          formatted = `(${digits.slice(0,3)}) ${digits.slice(3)}`;
-                        } else if (digits.length >= 1) {
-                          formatted = `(${digits}`;
-                        }
-                        setForm({ ...form, phone: formatted });
-                      }}
-                      className="w-full px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)]"
-                      placeholder="(000) 000-0000"
-                    />
-                  </div>
+                  <input
+                    type="email"
+                    pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)]"
+                    placeholder="you@email.com"
+                  />
                 </div>
               </div>
 
@@ -234,22 +377,29 @@ export default function CartPage() {
               <div className="border-t border-[var(--card-border)] mb-5" />
 
               {/* pickup availability */}
-              <h2 className="text-lg font-semibold text-[var(--text)] mb-1">Pickup Availability</h2>
-              <p className="text-xs text-[var(--input-border)] mb-4">Select the days you're available and add times for each. We'll reach out to finalize.</p>
+              <h2 className="text-lg font-semibold text-[var(--text)] mb-1">
+                Pickup Availability
+              </h2>
+              <p className="text-xs text-[var(--input-border)] mb-4">
+                Select the days you're available and add times for each. We'll
+                reach out to finalize.
+              </p>
 
               {/* day toggles + per-day time inputs */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-[var(--text)] mb-2">Available Days</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">
+                  Available Days
+                </label>
                 <div className="flex gap-2 flex-wrap mb-3">
-                  {DAYS.map(day => (
+                  {DAYS.map((day) => (
                     <button
                       key={day}
                       type="button"
                       onClick={() => toggleDay(day)}
                       className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
                         selectedDays.includes(day)
-                          ? 'bg-[var(--teal)] text-white border-[var(--teal)]'
-                          : 'bg-[var(--header)] text-[var(--text)] border-[var(--input-border)] hover:border-[var(--teal)]'
+                          ? "bg-[var(--teal)] text-white border-[var(--teal)]"
+                          : "bg-[var(--header)] text-[var(--text)] border-[var(--input-border)] hover:border-[var(--teal)]"
                       }`}
                     >
                       {day}
@@ -262,7 +412,9 @@ export default function CartPage() {
                   <div className="space-y-2">
                     {selectedDays.map((day, index) => (
                       <div key={day} className="flex items-center gap-2">
-                        <span className="w-10 text-sm font-medium text-[var(--text)] flex-shrink-0">{day}</span>
+                        <span className="w-10 text-sm font-medium text-[var(--text)] flex-shrink-0">
+                          {day}
+                        </span>
                         <input
                           type="text"
                           value={dayTimes[day]}
@@ -276,31 +428,13 @@ export default function CartPage() {
                 )}
               </div>
 
-              {/* contact preference */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-[var(--text)] mb-2">Preferred Contact Method</label>
-                <div className="flex gap-3">
-                  {['Email', 'Phone', 'Either'].map(method => (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => toggleContact(method)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-                        contactPreference.includes(method)
-                          ? 'bg-[var(--teal)] text-white border-[var(--teal)]'
-                          : 'bg-[var(--header)] text-[var(--text)] border-[var(--input-border)] hover:border-[var(--teal)]'
-                      }`}
-                    >
-                      {method}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* order notes */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                  Order Notes <span className="text-xs font-normal text-[var(--input-border)]">(optional)</span>
+                  Order Notes{" "}
+                  <span className="text-xs font-normal text-[var(--input-border)]">
+                    (optional)
+                  </span>
                 </label>
                 <textarea
                   value={orderNotes}
@@ -313,26 +447,53 @@ export default function CartPage() {
 
               {/* reach out notice */}
               <div className="flex items-start gap-2 bg-[var(--header)] border border-[var(--card-border)] rounded-md px-3 py-2.5 mb-5 text-xs text-[var(--text)]">
-                <Info size={13} className="mt-0.5 flex-shrink-0 text-[var(--teal)]" />
-                <p>We'll reach out via phone or email to confirm your pickup time. No payment is needed until pickup.</p>
+                <Info
+                  size={13}
+                  className="mt-0.5 flex-shrink-0 text-[var(--teal)]"
+                />
+                <p>
+                  We'll reach out via email to confirm your pickup time. No
+                  payment is needed until pickup.
+                </p>
               </div>
 
               {/* submit */}
+              {stockError.length > 0 && (
+                <div className="bg-[var(--header)] border border-[var(--rust)] rounded-md px-4 py-3 mb-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      {stockError.map((msg, i) => (
+                        <p key={i} className="text-sm text-[var(--rust)]">
+                          {msg}
+                        </p>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setStockError([])}
+                      className="text-[var(--rust)] hover:opacity-70 transition-opacity flex-shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              {submitError && (
+                <p className="text-sm text-[var(--rust)] mb-3">{submitError}</p>
+              )}
               <button
                 onClick={handleSubmit}
-                disabled={!canSubmit}
-                className={`w-full py-3 rounded-md font-medium transition-colors ${
-                  canSubmit
-                    ? 'bg-[var(--rust)] hover:bg-[#a0523f] text-white'
-                    : 'bg-[var(--disabled-bg)] text-[var(--disabled-text)] cursor-not-allowed'
+                disabled={!canSubmit || submitting}
+                className={`w-full py-3 rounded-md font-medium transition-colors flex items-center justify-center gap-2 ${
+                  canSubmit && !submitting
+                    ? "bg-[var(--rust)] hover:bg-[#a0523f] text-white"
+                    : "bg-[var(--disabled-bg)] text-[var(--disabled-text)] cursor-not-allowed"
                 }`}
               >
-                Place Reservation
+                {submitting && <Loader2 size={16} className="animate-spin" />}
+                {submitting ? "Placing Reservation..." : "Place Reservation"}
               </button>
-
             </div>
           </div>
-
         </div>
       </div>
     </div>
