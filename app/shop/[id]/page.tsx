@@ -250,7 +250,7 @@ function ProductPageContent() {
             {product.sun && (
               <div className="flex items-baseline justify-between py-3 border-b border-dashed border-[var(--card-border)]">
                 <span className="text-xs uppercase tracking-widest text-[var(--input-border)]">
-                  Sun
+                  Sun (Outdoors)
                 </span>
                 <span className="text-sm text-[var(--text)]">
                   {product.sun}
@@ -260,7 +260,7 @@ function ProductPageContent() {
             {product.light && (
               <div className="flex items-baseline justify-between py-3 border-b border-dashed border-[var(--card-border)]">
                 <span className="text-xs uppercase tracking-widest text-[var(--input-border)]">
-                  Light
+                  Light (Indoors)
                 </span>
                 <span className="text-sm text-[var(--text)]">
                   {product.light}

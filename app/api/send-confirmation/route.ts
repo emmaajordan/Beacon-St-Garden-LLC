@@ -15,6 +15,14 @@ export async function POST(req: NextRequest) {
     const total = items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
     const availabilityEntries = Object.entries(availability || {});
 
+    const itemsList = items
+      .map((item: any) => `${item.name} x${item.quantity} — $${(item.price * item.quantity).toFixed(2)}`)
+      .join('\n');
+
+    const availabilityText = Object.entries(availability || {})
+      .map(([day, time]) => `${day}: ${time || 'Any time'}`)
+      .join('\n');
+
     await transporter.sendMail({
       from: `Beacon Street Gardens <${process.env.GMAIL_USER}>`,
       to: email || process.env.GMAIL_USER,
@@ -84,6 +92,28 @@ export async function POST(req: NextRequest) {
 
         </div>
       `,
+    });
+
+    await transporter.sendMail({
+      from: `Beacon Street Gardens <${process.env.GMAIL_USER}>`,
+      to: process.env.GMAIL_USER,
+      subject: `New Reservation from ${name}`,
+text: `
+New reservation received!
+
+Name: ${name}
+Email: ${email || 'not provided'}
+
+Items:
+${itemsList}
+
+Total: $${total.toFixed(2)}
+
+Availability:
+${availabilityText || 'Not specified'}
+
+${orderNotes ? `Order notes: ${orderNotes}` : ''}
+`.trim()
     });
 
     return NextResponse.json({ success: true });
