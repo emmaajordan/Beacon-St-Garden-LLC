@@ -643,11 +643,128 @@ function BlogPostRow({
   );
 }
 
+function AddImageModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const supabase = createClient();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleSubmit = async () => {
+    setUploading(true);
+    setError("");
+
+    if (imageFile) {
+      const ext = imageFile.name.split(".").pop();
+      const filename = `${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("blog-images")
+        .upload(filename, imageFile);
+
+      if (uploadError) {
+        setError("Image upload failed: " + uploadError.message);
+        setUploading(false);
+        return;
+      }
+      else {
+        onSuccess();
+        onClose();
+        setUploading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="relative bg-[var(--header)] rounded-lg shadow-xl border border-[var(--card-border)] w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-[var(--header)] border-b border-[var(--card-border)] px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-lg font-semibold text-[var(--text)]">
+            Upload New Image
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--card-bg)] hover:bg-[var(--card-border)] transition-colors text-[var(--text)]"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="mb-6">
+            <label className={styles.labelClass}>New Image</label>
+            <div className="flex items-start gap-4">
+              {imagePreview ? (
+                <div className="relative w-28 h-28 rounded-md overflow-hidden border border-[var(--card-border)] flex-shrink-0">
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-28 h-28 rounded-md border border-dashed border-[var(--input-border)] flex items-center justify-center flex-shrink-0 bg-[var(--card-bg)]">
+                  <Upload size={20} className="text-[var(--input-border)]" />
+                </div>
+              )}
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="text-sm text-[var(--text)] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:bg-[var(--teal)] file:text-white hover:file:bg-[var(--teal-hover)] file:cursor-pointer cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className={styles.sectionClass}>
+              {error && (
+                <p className="text-sm text-[var(--rust)] mb-3">{error}</p>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={uploading}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium text-sm transition-colors ${
+                  uploading
+                    ? "bg-[var(--disabled-bg)] text-[var(--disabled-text)] cursor-not-allowed"
+                    : "bg-[var(--rust)] hover:bg-[var(--dark-rust)] text-white"
+                }`}
+              >
+                {uploading && <Loader2 size={15} className="animate-spin" />}
+                {uploading ? "Uploading..." : "Upload Image"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function BlogTab() {
   const supabase = createClient();
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [showImgModal, setShowImgModal] = useState(false);
+  const [postLoading, setPostLoading] = useState(true);
   const [posts, setPosts] = useState<any[]>([]);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [images, setImages] = useState<any[]>([]);
+  const [imageExpanded, setImageExpanded] = useState(false);
 
   const fetchPosts = async () => {
     const { data, error } = await supabase
@@ -657,7 +774,31 @@ export default function BlogTab() {
       .order("created_at", { ascending: false });
 
     if (!error) setPosts(data || []);
-    setLoading(false);
+    setPostLoading(false);
+  }
+
+  const fetchImages = async () => {
+    setImageLoading(true);
+    const { data, error } = await supabase
+      .storage
+      .from("blog-images")
+      .list();
+
+    if (!error){
+      const imageData = data;
+      let arr = [];
+      for (let i = 1; i < imageData.length; i++){
+        const { data } = supabase
+          .storage
+          .from('blog-images')
+          .getPublicUrl(imageData[i].name);
+        arr.push({'id': i, 'url': data.publicUrl});
+      }
+      setImages(arr);
+    }
+    else setImages([]);
+    
+    setImageLoading(false);
   }
 
   const handleUpdate = (updated: any) => {
@@ -670,24 +811,81 @@ export default function BlogTab() {
 
   return (
     <div>
-
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold text-[var(--text)]">
           Blog Posts{" "}
           <span className="text-sm font-normal text-[var(--input-border)] ml-1">
             {posts.length} posts
           </span>
         </h2>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-[var(--rust)] hover:bg-[var(--dark-rust)] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-        >
-          <Plus size={15} />
-          Create New Post
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-[var(--rust)] hover:bg-[var(--dark-rust)] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            <Plus size={15} />
+            Create New Post
+          </button>
+
+          <button
+            onClick={() => setShowImgModal(true)}
+            className="flex items-center gap-2 bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            <Upload size={15} />
+            Upload New Image
+          </button>
+        </div>
       </div>
 
-      {loading ? (
+      <div className="border border-[var(--card-border)] rounded-lg overflow-hidden mb-8">
+        <div
+          className="flex items-center justify-center gap-2 p-2 bg-[var(--card-bg)] cursor-pointer hover:bg-[var(--card-border)] transition-colors"
+          onClick={() => {
+            setImageExpanded((prev) => !prev);
+            fetchImages();
+          }}
+        >  
+          <p className="text-md font-medium text-[var(--text)]">Uploaded Images</p>
+          <span className="text-[var(--input-border)]">
+            {imageExpanded ? <ChevronDown size={16} /> : <ChevronDown size={16} />}
+          </span>
+        </div>
+
+        {/* Image List */}
+        {imageExpanded && (
+          <div className="p-5 bg-[var(--header)] border-t border-[var(--card-border)]">
+            {imageLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={28} className="animate-spin text-[var(--teal)]" />
+              </div>
+            ) : images.length === 0 ? (
+              <p className="text-sm text-[var(--input-border)] text-center py-12">
+                No images uploaded yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 md:grid-cols-6 sm:grid-cols-3 gap-4">
+                {images.map((image) => (
+                  <div key={image.id} className="flex flex-col items-center gap-2">
+                    <div className="relative w-full aspect-square rounded-md overflow-hidden border border-[var(--card-border)] bg-[var(--card-bg)]">
+                      <Image 
+                        src={image.url}
+                        alt="image preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <p className="text-xs text-[var(--input-border)] text-center break-words px-1 w-full">
+                      {image.url}
+                    </p>
+                  </div>
+                ))}
+              </div>    
+            )}
+          </div>
+        )}
+      </div>
+
+      {postLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 size={28} className="animate-spin text-[var(--teal)]" />
         </div>
@@ -709,10 +907,17 @@ export default function BlogTab() {
         </div>
       )}
 
-      {showModal && (
+      {(showModal && !showImgModal) && (
         <AddPostModal
           onClose={() => setShowModal(false)}
           onSuccess={fetchPosts}
+        />
+      )}
+
+      {(!showModal && showImgModal) && (
+        <AddImageModal
+          onClose={() => setShowImgModal(false)}
+          onSuccess={fetchImages}
         />
       )}
     </div>
