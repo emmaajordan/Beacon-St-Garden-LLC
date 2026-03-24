@@ -1,14 +1,14 @@
 'use client'
 import Link from 'next/link';
 import { useState } from 'react';
-import { Instagram } from 'lucide-react';
+import { Instagram, Facebook } from 'lucide-react';
 import { Sprout } from 'lucide-react';
 import { CircleAlert } from 'lucide-react';
 
 
 // Tailwind styling for repeated components
 const contactStyles = {
-  h2: "text-xl font-semibold",
+  h2: "text-xl font-semibold text-nowrap mb-2",
   infoSpan: "flex gap-4 items-center",
   label: "block text-md font-semibold mb-1",
   input: "w-full bg-(--header) border border-gray-300 rounded-sm shadow-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-(--input-border)"
@@ -81,11 +81,11 @@ export default function ContactPage() {
     <div className="bg-(--header)">
       <h1 className="text-3xl font-medium text-center my-6">Contact</h1>
       <hr className="border-0 h-[2px] bg-gradient-to-r from-transparent via-(--card-border) to-transparent" />
-      <div className="relative flex max-w-5xl mx-auto my-8">
+      <div className="relative flex flex-col md:flex-row max-w-5xl mx-auto my-8 gap-8 md:gap-0">
         
         {/* Contact form */}
-        <div className="relative w-1/2">
-          <form onSubmit={handleSubmit} className="max-w-md mx-auto p-6 bg-(--secondary) shadow-md rounded-lg">
+        <div className="relative w-auto md:w-1/2 mx-6">
+          <form onSubmit={handleSubmit} className="p-6 bg-(--secondary) shadow-md rounded-lg">
             
             {/* Name */}
             <label htmlFor="senderName" className={`${contactStyles.label}`}>
@@ -136,44 +136,54 @@ export default function ContactPage() {
         </div>
 
         {/* Store Information */}
-        <div className="relative w-1/2 max-w-md mx-auto p-6 bg-(--secondary) shadow-md rounded-lg space-y-1">
+        <div className="relative w-auto md:w-1/2 mx-6 p-6 bg-(--secondary) shadow-md rounded-lg space-y-1">
           
           {/* Email */}
           <span className={`${contactStyles.infoSpan}`}>
             <h2 className={`${contactStyles.h2}`}>Email</h2>
             <DecLine />
           </span>
-          <p className="mb-5">beaconstgardens@gmail.com</p>
+          <p className="mb-8">beaconstgardens@gmail.com</p>
 
           {/* Market hours */}
           <span className={`${contactStyles.infoSpan}`}>
-            <h2 className={`${contactStyles.h2}`}>Hours</h2>
+            <h2 className={`${contactStyles.h2}`}>Farmers Market</h2>
             <DecLine />
-          </span>          
-          <p className="mb-5">Saturdays 10AM - 1PM</p>
+          </span>  
+          <p className="mb-2">Squirrel Hill Farmers Market</p>     
+          <p className="mb-2">Sundays 9AM - 1PM</p>
+          <address className="not-italic mb-8">
+            <p>5737 Beacon St</p>
+            <p>Pittsburgh, PA 15217</p>
+          </address>
 
-          {/* Location */}
+          {/* Location
           <span className={`${contactStyles.infoSpan}`}>
             <h2 className={`${contactStyles.h2}`}>Location</h2>
             <DecLine />
           </span>
           <p>Address line 1</p>
-          <p className="mb-5">Address line 2</p>
+          <p className="mb-5">Address line 2</p> */}
 
           {/* Pickup Details */}
-          <span className={`${contactStyles.infoSpan}`}>
+          {/* <span className={`${contactStyles.infoSpan}`}>
             <h2 className={`${contactStyles.h2}`}>Pickup</h2>
             <DecLine />
           </span>
-          <p className="mb-5">You can reserve items online for scheduled pickup</p>
+          <p className="mb-5">You can reserve items online for scheduled pickup</p> */}
 
-          {/* Instagram */}
+          {/* Social Media */}
+          {/* TODO - make links */}
           <span className={`${contactStyles.infoSpan}`}>
-            <h2 className={`${contactStyles.h2}`}>Follow</h2>
+            <h2 className={`${contactStyles.h2}`}>Follow Us</h2>
             <DecLine />
           </span>
-          <span className="flex gap-2 items-center">
+          <span className="flex gap-2 items-center mb-2">
             <Instagram size={15} color="var(--text)" />
+            <p>@beaconstgardens</p>
+          </span>
+          <span className="flex gap-2 items-center">
+            <Facebook size={15} color="var(--text)" />
             <p>@beaconstgardens</p>
           </span>
 

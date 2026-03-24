@@ -631,7 +631,7 @@ function BlogPostRow({
               <p className="text-xs uppercase tracking-widest text-[var(--input-border)] flex-shrink-0 mr-4 pb-2">
                 Preview 
               </p>
-              <div className="bg-white/40">
+              <div className="bg-white/40 border border-(--card-border) px-6">
                 <MarkdownRenderer md={post.content}/>
               </div>
             </div>

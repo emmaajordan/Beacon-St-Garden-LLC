@@ -3,7 +3,7 @@ import { PawPrint, Flower, Instagram } from 'lucide-react';
 import Link from 'next/link';
 
 const styles = {
-  heading: "text-2xl font-semibold my-6 text-nowrap",
+  heading: "text-2xl font-semibold my-2 md:my-6 text-nowrap",
   section: "prose prose-lg mb-4",
   text: "py-2",
   line: "w-full border-0 h-[2px] bg-(--card-border) rounded-full ml-4",
@@ -12,7 +12,7 @@ const styles = {
 export default function AboutPage() {
   return (
     <div>
-      <div className="w-full h-64 bg-cover bg-center" style={{backgroundImage: "url('/flowers.jpg')"}}></div>
+      <div className="w-full h-45 md:h-64 bg-cover bg-center" style={{backgroundImage: "url('/flowers.jpg')"}}></div>
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-6">About Us</h1>
         

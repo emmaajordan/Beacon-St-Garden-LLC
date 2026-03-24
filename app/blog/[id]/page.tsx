@@ -7,6 +7,15 @@ import { Loader2 } from "lucide-react";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export default function ProductPage() {
     const { id } = useParams();
     const supabase = createClient();
@@ -29,7 +38,7 @@ export default function ProductPage() {
     }, []);
 
     return (
-        <div>
+        <div className="flex justify-center">
             {loading ? (
                 <div className="flex items-center justify-center py-12">
                     <Loader2 size={28} className="animate-spin text-[var(--teal)]" />
@@ -42,7 +51,12 @@ export default function ProductPage() {
                     </Link>
                 </div>
             ) : (
-                <MarkdownRenderer md={post.content}/>
+                <div className="w-full px-4 md:w-5xl md:px-0 py-10">
+                    <h1 className="text-4xl font-bold py-1">{post.title}</h1>
+                    <p className="text-sm text-(--input-border) py-2">Posted {formatDate(post.created_at)}</p>
+                    <hr className="mb-4 border-0 h-[4px] bg-(--card-border)" />
+                    <MarkdownRenderer md={post.content}/>
+                </div>
             )}
         </div>
     );
