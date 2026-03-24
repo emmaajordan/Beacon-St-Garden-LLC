@@ -40,6 +40,34 @@ const labelClass =
   "block text-xs uppercase tracking-widest text-[var(--input-border)] mb-1";
 const inputClass =
   "w-full px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)]";
+const TIME_SLOTS: string[] = [];
+for (let h = 6; h <= 21; h++) {
+  for (const m of [0, 30]) {
+    if (h === 21 && m === 30) break;
+    const hour12 = h % 12 === 0 ? 12 : h % 12;
+    const ampm = h < 12 ? "AM" : "PM";
+    TIME_SLOTS.push(`${hour12}:${m === 0 ? "00" : "30"} ${ampm}`);
+  }
+}
+
+function parsePickupString(s: string | null) {
+  if (!s) return { date: "", start: "", end: "" };
+  const [datePart, timePart] = s.split(" · ");
+  const [start, end] = (timePart ?? "").split(" – ");
+  return { date: datePart ?? "", start: start ?? "", end: end ?? "" };
+}
+
+function buildPickupString(date: string, start: string, end: string) {
+  if (!date && !start && !end) return "";
+  const datePart = date
+    ? new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+        weekday: "short", month: "short", day: "numeric", year: "numeric",
+      })
+    : "";
+  const timePart = start && end ? `${start} – ${end}` : start || end || "";
+  if (datePart && timePart) return `${datePart} · ${timePart}`;
+  return datePart || timePart;
+}
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
@@ -245,9 +273,15 @@ function ReservationRow({
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [pickupTime, setPickupTime] = useState(
-    reservation.proposed_pickup ?? "",
-  );
+  
+  const parsed = parsePickupString(reservation.proposed_pickup);
+  const [pickupDate, setPickupDate] = useState(() => {
+    const d = new Date(parsed.date);
+    return !isNaN(d.getTime()) ? d.toISOString().split("T")[0] : "";
+  });
+  const [pickupStart, setPickupStart] = useState(parsed.start);
+  const [pickupEnd, setPickupEnd] = useState(parsed.end);
+  const pickupTime = buildPickupString(pickupDate, pickupStart, pickupEnd);
   const [finalCost, setFinalCost] = useState<string>(
     reservation.final_cost?.toString() ?? "",
   );
@@ -632,13 +666,34 @@ function ReservationRow({
           {reservation.status !== "completed" && (
             <div className="mb-5">
               <label className={labelClass}>Proposed Pickup Time</label>
-              <input
-                type="text"
-                value={pickupTime}
-                onChange={(e) => setPickupTime(e.target.value)}
-                placeholder="e.g. Saturday March 15, 10am–12pm"
-                className={inputClass}
-              />
+              <div className="flex gap-2 items-center flex-wrap">
+                <input
+                  type="date"
+                  value={pickupDate}
+                  onChange={(e) => setPickupDate(e.target.value)}
+                  className="flex-1 min-w-[140px] px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)] cursor-pointer"
+                />
+                <select
+                  value={pickupStart}
+                  onChange={(e) => setPickupStart(e.target.value)}
+                  className="flex-1 min-w-[110px] px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)] cursor-pointer"
+                >
+                  <option value="">Start time</option>
+                  {TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <span className="text-sm text-[var(--input-border)]">–</span>
+                <select
+                  value={pickupEnd}
+                  onChange={(e) => setPickupEnd(e.target.value)}
+                  className="flex-1 min-w-[110px] px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)] cursor-pointer"
+                >
+                  <option value="">End time</option>
+                  {TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              {pickupTime && (
+                <p className="mt-1.5 text-xs text-[var(--input-border)]">{pickupTime}</p>
+              )}
             </div>
           )}
 
@@ -778,22 +833,22 @@ export default function OrdersTab() {
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
+  const parsePickupDate = (s: string | null) => {
+    if (!s) return 0;
+    const datePart = s.split(" · ")[0];
+    const d = new Date(datePart);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  };
 
   const confirmed = reservations
     .filter((r) => r.status === "confirmed")
     .sort(
-      (a, b) =>
-        new Date(b.confirmed_at ?? b.created_at).getTime() -
-        new Date(a.confirmed_at ?? a.created_at).getTime(),
-    );
+      (a, b) => parsePickupDate(a.proposed_pickup) - parsePickupDate(b.proposed_pickup));
 
   const completed = reservations
     .filter((r) => r.status === "completed")
     .sort(
-      (a, b) =>
-        new Date(b.completed_at ?? b.created_at).getTime() -
-        new Date(a.completed_at ?? a.created_at).getTime(),
-    );
+      (a, b) => parsePickupDate(a.proposed_pickup) - parsePickupDate(b.proposed_pickup));
 
   if (loading) {
     return (
