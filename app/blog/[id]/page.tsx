@@ -53,7 +53,7 @@ export default function ProductPage() {
             ) : (
                 <div className="w-full px-4 md:w-5xl md:px-0 py-10">
                     <h1 className="text-4xl font-bold py-1">{post.title}</h1>
-                    <p className="text-sm text-(--input-border) py-2">Posted {formatDate(post.created_at)}</p>
+                    <p className="text-sm text-(--input-border) py-2">{formatDate(post.created_at)}</p>
                     <hr className="mb-4 border-0 h-[4px] bg-(--card-border)" />
                     <MarkdownRenderer md={post.content}/>
                 </div>
