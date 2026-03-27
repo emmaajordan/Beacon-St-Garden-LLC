@@ -1,20 +1,26 @@
 'use client'
+import { PawPrint, Flower, Instagram } from 'lucide-react';
+import Link from 'next/link';
 
 const styles = {
-  heading: "text-2xl font-semibold mt-6 mb-4",
-  section: "prose prose-lg",
-  text: "py-2"
+  heading: "text-2xl font-semibold my-2 md:my-6 text-nowrap",
+  section: "prose prose-lg mb-4",
+  text: "py-2",
+  line: "w-full border-0 h-[2px] bg-(--card-border) rounded-full ml-4",
 }
 
 export default function AboutPage() {
   return (
     <div>
-      <div className="w-full h-64 bg-cover bg-center" style={{backgroundImage: "url('/flowers.jpg')"}}></div>
+      <div className="w-full h-45 md:h-64 bg-cover bg-center" style={{backgroundImage: "url('/flowers.jpg')"}}></div>
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-6">About Us</h1>
         
         <section className={styles.section}>
-          <h2 className={styles.heading}>Our Story</h2>
+          <div className="flex items-center gap-2">
+            <h2 className={styles.heading}>Our Story</h2>
+            <hr className={styles.line} />
+          </div>
           <p className={styles.text}>
             It started simply: a love of flowers and a dream to fill our outdoor space with color.
             Last year, we grew more flowers than ever before — and we were completely hooked.
@@ -33,7 +39,10 @@ export default function AboutPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.heading}>Our Mission</h2>
+          <div className="flex items-center gap-2">
+            <h2 className={styles.heading}>Our Mission</h2>
+            <hr className={styles.line} />
+          </div>
           <p className={styles.text}>
             We're here to help you achieve your garden dreams — whether that means a porch bursting 
             with color, a pollinator-friendly yard, or a summer full of homegrown tomatoes.
@@ -41,39 +50,45 @@ export default function AboutPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.heading}>How We Grow</h2>
+          <div className="flex items-center gap-2">
+            <h2 className={styles.heading}>How We Grow</h2>
+            <hr className={styles.line} />
+          </div>
           <p className={styles.text}>
             We believe in growing with care — for our plants, our health, and the environment. 
             Here's what that looks like in practice:
           </p>
-          <ul className="pl-12">
+          <ul className="pl-12 list-disc">
             <li className={styles.text}>
-              <span className="font-bold">Mostly organic: </span>
+              <span className="font-extrabold text-(--teal-hover)">Mostly organic: </span>
               We follow safe and mostly organic principles throughout our growing process. 
               We are not strictly organic because we use hydroponic nutrients for our seedlings, and some of
               our produce is grown hydroponically to use water more efficiently.
             </li>
             <li className={styles.text}>
-              <span className="font-bold">No pesticides outdoors: </span>
+              <span className="font-extrabold text-(--teal-hover)">No pesticides outdoors: </span>
               We never use conventional pesticides in our outdoor garden. 
               We rely on a healthy ecosystem to manage pests naturally — and we want to protect the 
               pollinators we depend on.
             </li>
             <li className={styles.text}>
-              <span className="font-bold">Responsible indoor pest management: </span>
+              <span className="font-extrabold text-(--teal-hover)">Responsible indoor pest management: </span>
               For indoor seedlings, we occasionally use organic-approved 
               pesticides when needed. By the time any plant goes outside, it is completely safe for people, 
               pets, and pollinators.
             </li>
             <li className={styles.text}>
-              <span className="font-bold">Low plastic: </span>
+              <span className="font-extrabold text-(--teal-hover)">Low plastic: </span>
               We use soil blocks instead of plastic cell packs whenever we can, reducing waste one seedling at a time.
             </li>
           </ul>
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.heading}>What We Offer</h2>
+          <div className="flex items-center gap-2">
+            <h2 className={styles.heading}>What We Offer</h2>
+            <hr className={styles.line} />
+          </div>
           <p className={styles.text}>
             Our biggest offerings are seedlings and flower baskets, available starting in early May. 
             After that, availability changes week to week based on what's fresh and ready — 
@@ -85,29 +100,60 @@ export default function AboutPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.heading}>Where To Find Us</h2>
+          <div className="flex items-center gap-2">
+            <h2 className={styles.heading}>Where To Find Us</h2>
+            <hr className={styles.line} />
+          </div>
           <p className={styles.text}>
-            <span className="font-bold">Online: </span>Browse and place orders for pickup right here on our website.
+            <span className="font-extrabold text-(--teal-hover)">Online: </span>
+            Browse and place orders for pickup right here on our website.
           </p>
           <p className={styles.text}>
-            <span className="font-bold">Plant Stand: </span>We run a plant stand from our home during Squirrel Hill Farmers Market hours on Sundays. 
+            <span className="font-extrabold text-(--teal-hover)">Plant Stand: </span>
+            We run a plant stand from our home during Squirrel Hill Farmers Market hours on Sundays. 
             It's the perfect opportunity to stop by and see us, then head down the street to explore the 
             market and grab a bite to eat.
           </p>
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.heading}>Dog Friendly</h2>
+          <div className="flex items-center gap-2">
+            
+            <h2 className={styles.heading}>Dog Friendly</h2>
+            <PawPrint size={25} color="var(--text)" />
+            <hr className={styles.line} />
+          </div>
           <p className={styles.text}>
             We have a poodle who would love to meet your pup. Feel free to bring your furry friend when you visit.
           </p>
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.heading}>Come Grow With Us</h2>
+          <div className="flex items-center gap-2">
+            <h2 className={styles.heading}>Come Grow With Us</h2>
+            <hr className={styles.line} />
+          </div>
           <p className={styles.text}>
             Whether you're a seasoned gardener or just getting started, we'd love to help you bring more beauty into your space.
           </p>
+
+          {/* <div className="flex gap-4 mt-6 text-(--disabled-text)">
+            <Link href="/shop" className="px-4 py-2 bg-(--card-bg) rounded hover:bg-(--card-border)">
+              Shop
+            </Link>
+            <Link href="/contact" className="px-4 py-2 bg-(--card-bg) rounded hover:bg-(--card-border)">
+              Contact
+            </Link>
+            <a 
+              href="https://www.instagram.com/crfrencho/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex gap-2 items-center px-4 py-2 bg-(--card-bg) rounded hover:bg-(--card-border)">
+              <span>Follow Us</span>
+              <Instagram size={20}/>
+            </a>
+          </div> */}
+          
         </section>
       </div>
     </div>

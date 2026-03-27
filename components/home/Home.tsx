@@ -20,8 +20,9 @@ const bannerSrc = "/banner_seedlings.jpeg";
 const categories = [
     { id: 1, href: '/shop?category=Vegetable/Fruit', label: 'Fruit & Vegetable Plants', image: '/pepper-photo.jpg' },
     { id: 2, href: '/shop?category=Flowers', label: 'Flowers', image: '/colorful-flowers.jpg' },
-    { id: 3, href: '/shop?category=House Plant', label: 'House Plants', image: '/potted-plant.jpg' },
-    { id: 4, href: '/shop?category=Herbs', label: 'Herbs', image: '/seed.jpg' },
+    { id: 3, href: '/shop?category=Herbs', label: 'Herbs', image: '/herb_photo.jpg' },
+    { id: 4, href: '/shop', label: 'Shop All', image: '/sprout_info.png' },
+    
 ];
 
 function formatDate(dateStr: string | null) {
@@ -40,7 +41,7 @@ export default function Home() {
     const [posts, setPosts] = useState<any[]>([]);
     const [postIndex, setPostIndex] = useState(0);
 
-    const handleBlogLeft = () => {
+    const handleBlogPrev = () => {
         const nextIndex = postIndex-1;
         if (nextIndex < 0){
             setPostIndex(posts.length-1);
@@ -50,7 +51,7 @@ export default function Home() {
         }
     }
 
-    const handleBlogRight = () => {
+    const handleBlogNext = () => {
         const nextIndex = (postIndex+1)%posts.length;
         setPostIndex(nextIndex);
     }
@@ -69,11 +70,19 @@ export default function Home() {
     useEffect(() => {
         fetchPosts();
     }, []);
+
+    // TODO- when hovering, pause
+    useEffect(() => {
+        const timer = setInterval(() => {
+            handleBlogNext();
+        }, 5000);
+        return () => clearInterval(timer);
+    });
     
   return (
-    <main>
+    <div className="">
         {/* Home banner */}
-        <div className="relative flex items-center h-[45vh]">
+        {/* <div className="relative flex items-center h-[45vh]">
             <div className="z-1">
                 <Image src={bannerSrc} alt="image of seedlings" fill style={{objectFit: 'cover'}} />
             </div>
@@ -83,6 +92,16 @@ export default function Home() {
                     <h1 className="text-3xl font-semibold">Beacon Street Gardens</h1>
                     <p className="">Welcoming tagline</p>
                 </div>
+            </div>
+        </div> */}
+
+        <div className="relative flex items-center h-64 bg-(--footer)">
+            <div className="flex flex-col items-center justify-center relative w-1/3 p-10" >
+                    <Image src="/logo_beaconstgardens_noback.png" alt="Logo" width={150} height={173}/>
+                    <h1 className="text-3xl font-semibold">Beacon St Gardens</h1>
+            </div>
+            <div className="relative w-2/3 h-full">
+                <Image src={bannerSrc} alt="banner photo" fill className="object-cover" />
             </div>
         </div>
 
@@ -105,7 +124,7 @@ export default function Home() {
         <div className="flex flex-col items-center max-w-6xl mx-auto text-center mt-8 mb-12">
             <h2 className="text-3xl mb-8 font-medium">What's New at the Garden?</h2>
             <div className="flex w-6xl items-center">
-                <button onClick={handleBlogLeft} className="cursor-pointer hover:scale-115">
+                <button onClick={handleBlogPrev} className="cursor-pointer hover:scale-115">
                     {posts.length > 1 && (
                         <ChevronLeft size={60} color="var(--input-border)" />
                     )}
@@ -168,7 +187,7 @@ export default function Home() {
                 )}
                 </div>
                 <button 
-                    onClick={handleBlogRight} 
+                    onClick={handleBlogNext} 
                     className="cursor-pointer hover:scale-115"
                 >
                     {posts.length > 1 && (
@@ -186,13 +205,17 @@ export default function Home() {
                 <div className="relative basis-1/2 w-full max-w-lg h-64">
                     <Image src="/stand_photo.jpeg" alt="photo of farmer's market stand" fill className="object-cover rounded-sm" />
                 </div>
-                <div className="relative flex flex-col basis-1/2 px-6 items-start gap-3">
+                <div className="relative flex flex-col basis-1/2 px-6 justify-between">
                     <h2 className="text-3xl font-medium">Visit Our Stand</h2>
-                    <hr className="w-full mb-4 border-0 h-[3px] bg-(--card-border)" />
-                    <p>Stand Hours</p>
-                    <p>Farmer's Market</p>
-                    <p>Address</p>
-                    <Link href='/about' className="text-white bg-(--rust) mt-4 box-border border border-transparent hover:bg-(--dark-rust) font-base leading-5 rounded-md text-sm px-4 py-2">Learn More</Link>
+                    <hr className="w-full mb-2 border-0 h-[3px] bg-(--card-border)" />
+                    <p>Find us at the <span className="font-semibold">Squirrel Hill Farmer's Market</span></p>
+                    <p>Sundays 9am-1pm</p>
+                    <address className="not-italic">
+                        <p>5737 Beacon St</p>
+                        <p>Pittsburgh, PA 15217</p>
+                    </address>
+                    <p className="text-(--input-border) text-sm">*Check our socials for updates on stand schedule</p>
+                    <Link href='/about' className="w-fit text-white bg-(--rust) box-border border border-transparent hover:bg-(--dark-rust) font-base leading-5 rounded-md text-sm px-4 py-2">Learn More</Link>
                 </div>
             </div>
 
@@ -203,14 +226,14 @@ export default function Home() {
                     <h2 className="text-3xl text-nowrap font-medium">Shop by Category</h2>
                     <hr className="w-full border-0 h-[3px] bg-(--card-border)" />
                 </div>
-                <ul className="relative flex flex-col md:flex-row justify-between">
+                <ul className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {categories.map((category) => (
-                        <li key={category.id} className="relative flex flex-col items-center">
-                            <Link href={category.href} className="h-64 w-68 hover:scale-103">
-                                <div className="relative h-54">
-                                    <Image src={category.image} alt="photo of seedling" fill className="object-cover" />
+                        <li key={category.id} className="relative bg-[var(--card-bg)]">
+                            <Link href={category.href} className="flex flex-col w-full aspect-square overflow-hidden rounded-md">
+                                <div className="relative h-full w-full bg-(--card-border)">
+                                    <Image src={category.image} alt="photo of seedling" fill className="object-cover hover:scale-105 transition-transform duration-300 overflow-hidden" />
                                 </div>
-                                <div className="relative text-lg text-(--header) bg-(--teal-hover) p-1">
+                                <div className="relative text-sm md:text-lg text-(--header) bg-(--teal-hover) p-1">
                                     <p>{category.label}</p>
                                 </div>
                             </Link>
@@ -220,6 +243,6 @@ export default function Home() {
             </div>
 
         </div>
-    </main>
+    </div>
   );
 }
