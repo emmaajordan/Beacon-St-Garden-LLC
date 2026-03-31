@@ -213,17 +213,17 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-[var(--header)]">
-      <div className="mx-auto px-8 py-10 max-w-5xl">
+      <div className="mx-auto px-4 md:px-8 py-6 md:py-10 max-w-5xl">
         {/* page title */}
-        <h1 className="text-3xl font-semibold text-[var(--text)] mb-2 text-center">
+        <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text)] mb-2 text-center">
           Cart
         </h1>
         <div className="border-t border-[var(--card-border)] mb-8" />
 
         {/* two column layout */}
-        <div className="flex gap-6 items-start">
+        <div className="flex flex-col md:flex-row gap-6 items-start">
           {/* LEFT — cart items + notice */}
-          <div className="w-80 flex-shrink-0 space-y-4">
+          <div className="w-full md:w-80 md:flex-shrink-0 space-y-4">
             {cartItems.length === 0 ? (
               <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-sm p-8 flex flex-col items-center text-center gap-4">
                 <p className="text-sm text-[var(--input-border)]">
@@ -396,7 +396,7 @@ export default function CartPage() {
                       key={day}
                       type="button"
                       onClick={() => toggleDay(day)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
+                      className={`px-2.5 py-1 rounded-md text-xs md:text-sm font-medium border transition-colors ${
                         selectedDays.includes(day)
                           ? "bg-[var(--teal)] text-white border-[var(--teal)]"
                           : "bg-[var(--header)] text-[var(--text)] border-[var(--input-border)] hover:border-[var(--teal)]"

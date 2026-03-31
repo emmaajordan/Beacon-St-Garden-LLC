@@ -186,7 +186,7 @@ function ProductPageContent() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleDecrease}
-                    className="w-10 h-10 bg-[var(--button-gray)] hover:bg-[var(--button-gray-hover)] rounded-sm flex items-center justify-center text-xl font-bold text-white transition-colors"
+                    className="w-10 h-10 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded-sm flex items-center justify-center text-xl font-bold text-white transition-colors"
                   >
                     −
                   </button>

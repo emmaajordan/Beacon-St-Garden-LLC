@@ -4,7 +4,7 @@ import ProductCard from "@/components/shop/ProductCard";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/supabase";
-import { Loader2 } from "lucide-react";
+import { Loader2, SlidersHorizontal, ChevronUp, ChevronDown} from "lucide-react";
 
 export default function ShopPage() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -104,6 +104,7 @@ export default function ShopPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -142,7 +143,7 @@ export default function ShopPage() {
               <p className="text-base text-[var(--text)]">
                 Reserve fresh vegetables, herbs, and flowers
                 <br />
-                fresh from our garden. (probably change. just a placeholder)
+                fresh from our garden.
               </p>
             </div>
           </div>
@@ -150,21 +151,30 @@ export default function ShopPage() {
       </section>
 
       {/*main shop*/}
-      <div className="mx-auto px-8 py-8">
-        <div className="flex gap-6">
+      <div className="mx-auto px-4 md:px-8 py-4 md:py-8">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-6">
           {/*filters*/}
-          <aside className="w-52 flex-shrink-0">
-            <div className="bg-[var(--card-bg)] p-5 rounded-lg border border-[var(--card-border)] shadow-sm sticky top-24">
-              <h3 className="text-base font-semibold text-[var(--text)] mb-3 pb-2 border-b border-[var(--card-border)]">
+          <aside className="w-full md:w-52 md:flex-shrink-0">
+            {/* mobile toggle */}
+            <button
+              className="flex md:hidden items-center gap-2 mb-2 text-sm font-medium text-[var(--text)] border border-[var(--card-border)] px-3 py-1.5 rounded-md bg-[var(--card-bg)]"
+              onClick={() => setFiltersOpen(prev => !prev)}
+            >
+              <SlidersHorizontal size={14} />
+              {filtersOpen ? 'Hide Filters' : 'Filters'}
+              {filtersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            <div className={`${filtersOpen ? 'block' : 'hidden'} mb-2 md:block bg-[var(--card-bg)] p-3 md:p-5 rounded-lg border border-[var(--card-border)] shadow-sm md:sticky top-24`}>
+              <h3 className="text-sm font-semibold text-[var(--text)] mb-2 pb-2 border-b border-[var(--card-border)] md:text-base md:mb-3">
                 Filters
               </h3>
 
               {/*category*/}
-              <div className="mb-5">
-                <h4 className="font-medium text-[var(--text)] mb-2 text-sm">
+              <div className="mb-3 md:mb-5">
+                <h4 className="font-medium text-[var(--text)] mb-1.5 text-xs md:text-sm">
                   Category
                 </h4>
-                <div className="space-y-1.5">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 md:block md:space-y-1.5">
                   {/*TO ADD MORE CATEGORIES, ADD TO LIST BELOW*/}
                   {[
                     "Vegetable/Fruit",
@@ -195,7 +205,7 @@ export default function ShopPage() {
                 <h4 className="font-medium text-[var(--text)] mb-2 text-sm">
                   Availability
                 </h4>
-                <div className="space-y-1.5">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 md:block md:space-y-1.5">
                   {/*TO ADD DIFFERENT AVAILABILITY, ADD TO LIST BELOW*/}
                   {["Ready Now", "Coming Soon"].map((availability) => (
                     <label
@@ -221,7 +231,7 @@ export default function ShopPage() {
                   setSelectedAvailability([]);
                   setSearchQuery("");
                 }}
-                className="w-full bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white py-2 px-4 rounded-md transition-colors font-medium text-sm"
+                className="w-full bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white py-1.5 md:py-2 px-4 rounded-md transition-colors font-medium text-xs md:text-sm"
               >
                 Clear Filters
               </button>
@@ -231,7 +241,7 @@ export default function ShopPage() {
           {/*products*/}
           <main className="flex-1">
             {/*search & sort bar*/}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
               <div className="flex-1 max-w-md">
                 <input
                   type="text"
@@ -241,8 +251,8 @@ export default function ShopPage() {
                   className="w-full px-4 py-2 bg-transparent border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)] placeholder:text-[var(--input-border)] placeholder:opacity-70"
                 />
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-[var(--text)]">
+              <div className="flex items-center pl-4 gap-4 flex-shrink-0">
+                <span className="hidden md:inline text-sm text-[var(--text)]">
                   {filteredProducts.length > 0
                     ? `Showing ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} of ${filteredProducts.length} Products`
                     : ""}
@@ -250,7 +260,7 @@ export default function ShopPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 bg-transparent border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)] cursor-pointer"
+                  className="pl-2 md:px-4 py-2 bg-transparent border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)] cursor-pointer"
                 >
                   <option value=" ">Sort by: Newest</option>
                   <option value="price-low">Price: Low to High</option>
@@ -263,7 +273,7 @@ export default function ShopPage() {
             {/*product grid*/}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {loading ? (
-                <div className="col-span-5 flex items-center justify-center py-12">
+                <div className="col-span-2 md:col-span-5 flex items-center justify-center py-12">
                   <Loader2
                     size={32}
                     className="animate-spin text-[var(--teal)]"

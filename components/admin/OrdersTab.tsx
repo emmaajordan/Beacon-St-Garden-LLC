@@ -53,7 +53,7 @@ function NewOrderModal({
   const [pickupDate, setPickupDate] = useState('');
   const [pickupStart, setPickupStart] = useState('');
   const [pickupEnd, setPickupEnd] = useState('');
-  const [items, setItems] = useState<{ product_name: string; price: string; quantity: string }[]>([]);
+  const [ items, setItems] = useState<{ product_name: string; price: string; quantity: string; product_id?: string | null; stock?: number; }[]>([]);
   const [status, setStatus] = useState<'unconfirmed' | 'confirmed' | 'completed'>('unconfirmed');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -129,6 +129,29 @@ function NewOrderModal({
       setSaving(false);
       return;
     }
+    // deduct stock for non-custom items
+    for (const item of validItems) {
+      if (!item.product_id) continue;
+
+      const { data: freshProduct } = await supabase
+        .from('products')
+        .select('stock')
+        .eq('id', item.product_id)
+        .single();
+
+      if (!freshProduct || freshProduct.stock < parseInt(item.quantity)) {
+        setError(`Not enough stock for ${item.product_name}.`);
+        setSaving(false);
+        return;
+      }
+
+      await supabase
+        .from('products')
+        .update({ stock: freshProduct.stock - parseInt(item.quantity) })
+        .eq('id', item.product_id)
+        .eq('stock', freshProduct.stock);
+    }
+
     if (form.email) {
       if (status === 'confirmed') {
         await fetch('/api/send-pickup-confirmation', {
@@ -231,15 +254,28 @@ function NewOrderModal({
                     <span className="flex-1 text-sm text-[var(--text)]">{item.product_name}</span>
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => updateItem(i, 'quantity', String(Math.max(1, parseInt(item.quantity || '1') - 1)))}
-                        className="w-6 h-6 bg-[var(--button-gray)] hover:bg-[var(--button-gray-hover)] rounded flex items-center justify-center text-xs font-bold text-white transition-colors"
+                        onClick={() => {
+                          if (parseInt(item.quantity) <= 1) {
+                            removeItemRow(i);
+                          } else {
+                            updateItem(i, 'quantity', String(parseInt(item.quantity || '1') - 1));
+                          }}}
+                        className="w-6 h-6 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded flex items-center justify-center text-xs font-bold text-white transition-colors"
                       >
                         −
                       </button>
                       <span className="w-5 text-center text-sm text-[var(--text)]">{item.quantity}</span>
                       <button
-                        onClick={() => updateItem(i, 'quantity', String(parseInt(item.quantity || '1') + 1))}
-                        className="w-6 h-6 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded flex items-center justify-center text-xs font-bold text-white transition-colors"
+                        onClick={() => {
+                          const max = item.stock ?? Infinity;
+                          updateItem(i, 'quantity', String(Math.min(parseInt(item.quantity || '1') + 1, max)));
+                        }}
+                        disabled={item.stock !== undefined && parseInt(item.quantity) >= item.stock}
+                        className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-colors ${
+                          item.stock !== undefined && parseInt(item.quantity) >= item.stock
+                            ? "bg-[var(--button-gray)] text-white cursor-not-allowed opacity-50"
+                            : "bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white"
+                        }`}
                       >
                         +
                       </button>
@@ -257,11 +293,23 @@ function NewOrderModal({
               reservationId="__new__"
               onAdd={() => {}}
               onAddItem={(item) =>
-                setItems(prev => [...prev, {
-                  product_name: item.product_name,
-                  price: String(item.price),
-                  quantity: String(item.quantity),
-                }])
+                setItems(prev => {
+                  const existing = prev.findIndex(p => p.product_id && p.product_id === item.product_id);
+                  if (existing !== -1) {
+                    return prev.map((p, idx) => {
+                      if (idx !== existing) return p;
+                      const newQty = Math.min(parseInt(p.quantity) + 1, item.stock ?? Infinity);
+                      return { ...p, quantity: String(newQty) };
+                    });
+                  }
+                  return [...prev, {
+                    product_name: item.product_name,
+                    price: String(item.price),
+                    quantity: String(item.quantity),
+                    product_id: item.product_id ?? null,
+                    stock: item.stock,
+                  }];
+                })
               }
             />
           </div>
@@ -488,7 +536,7 @@ function AddItemRow({
 }: {
   reservationId: string;
   onAdd: () => void;
-  onAddItem?: (item: { product_name: string; price: number; quantity: number }) => void;
+  onAddItem?: (item: { product_name: string; price: number; quantity: number, product_id?: string | null; stock?: number }) => void;
 }) {
   const supabase = createClient();
   const [mode, setMode] = useState<"search" | "custom">("search");
@@ -498,16 +546,14 @@ function AddItemRow({
   const [customPrice, setCustomPrice] = useState("");
   const [customQty, setCustomQty] = useState("1");
   const [adding, setAdding] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSearch = async (q: string) => {
     setQuery(q);
-    if (q.length < 2) {
-      setResults([]);
-      return;
-    }
+    if (q.length < 2) { setResults([]); return; }
     const { data } = await supabase
       .from("products")
-      .select("id, name, price")
+      .select("id, name, price, stock")   // add stock
       .ilike("name", `%${q}%`)
       .limit(5);
     setResults(data || []);
@@ -516,8 +562,21 @@ function AddItemRow({
   const handleAddProduct = async (product: any) => {
     setAdding(true);
     if (onAddItem) {
-      onAddItem({ product_name: product.name, price: product.price, quantity: 1 });
+      onAddItem({ product_name: product.name, price: product.price, quantity: 1, product_id: product.id, stock: product.stock });
     } else {
+      // race condition check for existing reservations
+      const { data: freshProduct } = await supabase
+        .from("products")
+        .select("stock")
+        .eq("id", product.id)
+        .single();
+
+      if (!freshProduct || freshProduct.stock < 1) {
+        setError("Not enough stock.");
+        setAdding(false);
+        return;
+      }
+
       await supabase.from("reservation_items").insert({
         reservation_id: reservationId,
         product_id: product.id,
@@ -526,6 +585,12 @@ function AddItemRow({
         quantity: 1,
         is_custom: false,
       });
+
+      await supabase
+        .from("products")
+        .update({ stock: freshProduct.stock - 1 })
+        .eq("id", product.id)
+        .eq("stock", freshProduct.stock); // optimistic lock
     }
     setQuery("");
     setResults([]);
@@ -612,6 +677,7 @@ function AddItemRow({
               ))}
             </div>
           )}
+          {error && <p className="text-xs text-[var(--rust)] mt-1">{error}</p>}
         </div>
       ) : (
         <div className="flex gap-2 items-end">
@@ -939,7 +1005,7 @@ function ReservationRow({
                         onClick={() =>
                           handleUpdateQuantity(item.id, item.quantity - 1)
                         }
-                        className="w-6 h-6 bg-[var(--button-gray)] hover:bg-[var(--button-gray-hover)] rounded flex items-center justify-center text-xs font-bold text-white transition-colors"
+                        className="w-6 h-6 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded flex items-center justify-center text-xs font-bold text-white transition-colors"
                       >
                         −
                       </button>

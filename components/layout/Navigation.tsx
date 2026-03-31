@@ -51,7 +51,7 @@ export default function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 bg-[var(--header)] border-b border-gray-200 shadow-sm relative">
-      <div className="mx-auto px-8 h-[60px] flex items-center justify-between">
+      <div className="mx-auto px-6 md:px-8 h-[50px] md:h-[60px] flex items-center justify-between">
         {/*logo*/}
         <Link
           href="/"
@@ -65,9 +65,9 @@ export default function Navigation() {
             height={60}
             className="hidden md:inline"
           />
-          <span className="text-2xl font-medium text-[var(--text)]">
+          <span className="text-base md:text-2xl font-medium text-[var(--text)]">
             Beacon Street Gardens{" "}
-            <span className="text-sm font-normal">LLC</span>
+            <span className="text-xs md:text-sm font-normal">LLC</span>
           </span>
         </Link>
 

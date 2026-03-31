@@ -146,7 +146,7 @@ export default function ProductCard({
               >
                 <button
                   onClick={handleDecrease}
-                  className="w-8 h-8 bg-[var(--button-gray)] hover:bg-[var(--button-gray-hover)] rounded-md flex items-center justify-center text-xl font-bold text-white transition-colors"
+                  className="w-8 h-8 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded-md flex items-center justify-center text-xl font-bold text-white transition-colors"
                 >
                   −
                 </button>
