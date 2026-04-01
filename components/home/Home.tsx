@@ -71,19 +71,17 @@ export default function Home() {
         }
     }
 
-  const handleBlogPrev = () => {
-    const nextIndex = postIndex - 1;
-    if (nextIndex < 0) {
-      setPostIndex(posts.length - 1);
-    } else {
-      setPostIndex(nextIndex);
-    }
-  };
+    const handleBlogNext = () => {
+        const nextIndex = (postIndex + 1) % posts.length;
+        setPostIndex(nextIndex);
+    };
 
-  const handleBlogNext = () => {
-    const nextIndex = (postIndex + 1) % posts.length;
-    setPostIndex(nextIndex);
-  };
+    const fetchPosts = async () => {
+        const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
 
         if (!error) setPosts(data || []);
         setLoading(false);
@@ -113,7 +111,6 @@ export default function Home() {
                 </div>
             </div>
         </div>
-      </div>
 
         {/* Info Blurb */}
         <div className="bg-(--secondary)">
