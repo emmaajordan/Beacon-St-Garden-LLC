@@ -2,11 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, RefObject } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/supabase";
 import { Loader2, ArrowLeft, BadgeInfo } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
+
+// Hover Information:
+// Edit descriptions here to update
+const sunBlurb = "Placeholder description of sun details";
+const lightBlurb = "Placeholder description of light details";
+const waterBlurb = "Placeholder description of water details";
+
+const blurbStyle = "absolute bottom-10 right-0 text-xs max-w-sm p-2 rounded-md bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md z-10";
 
 function ProductPageContent() {
   const { id } = useParams();
@@ -16,6 +24,7 @@ function ProductPageContent() {
 
   const [showSun, setShowSun] = useState(false);
   const [showLight, setShowLight] = useState(false);
+  const [showWater, setShowWater] = useState(false);
 
   const { items, addItem, updateQuantity } = useCartStore();
   const cartItem = items.find((i) => i.id === id);
@@ -260,20 +269,19 @@ function ProductPageContent() {
                   <div 
                     onMouseEnter={() => setShowSun(true)}
                     onMouseLeave={() => setShowSun(false)}
-                    className=""
                   >
                     <BadgeInfo size={16} color="var(--input-border)" />
                   </div>
                 </span>
                 {showSun && (
-                  <div className="absolute bottom-10 right-0 text-xs max-w-sm p-2 rounded-md bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md z-10">
-                    <p>Placeholder explanation of what different sun levels mean</p>
+                  <div className={blurbStyle}>
+                    <p>{sunBlurb}</p>
                   </div>
                 )}
               </div>
             )}
             {product.light && (
-              <div className="flex items-baseline justify-between py-3 border-b border-dashed border-[var(--card-border)]">
+              <div className="relative flex items-baseline justify-between py-3 border-b border-dashed border-[var(--card-border)]">
                 <span className="text-xs uppercase tracking-widest text-[var(--input-border)]">
                   Light (Indoors)
                 </span>
@@ -282,26 +290,36 @@ function ProductPageContent() {
                   <div 
                     onMouseEnter={() => setShowLight(true)}
                     onMouseLeave={() => setShowLight(false)}
-                    className="color-(--input-border) hover:color-(--lines)"
                   >
-                    <BadgeInfo size={16} />
+                    <BadgeInfo size={16} color="var(--input-border)" />
                   </div>
                 </span>
                 {showLight && (
-                  <div className="absolute bottom-10 right-0 text-xs max-w-sm p-2 rounded-md bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md z-10">
-                    <p>Placeholder explanation of what different light levels mean</p>
+                  <div className={blurbStyle}>
+                    <p>{lightBlurb}</p>
                   </div>
                 )}
               </div>
             )}
             {product.watering && (
-              <div className="flex items-baseline justify-between py-3 border-b border-dashed border-[var(--card-border)]">
+              <div className="relative flex items-baseline justify-between py-3 border-b border-dashed border-[var(--card-border)]">
                 <span className="text-xs uppercase tracking-widest text-[var(--input-border)]">
                   Watering
                 </span>
-                <span className="text-sm text-[var(--text)]">
+                <span className="flex gap-2 items-center text-sm text-[var(--text)]">
                   {product.watering}
+                  <div 
+                    onMouseEnter={() => setShowWater(true)}
+                    onMouseLeave={() => setShowWater(false)}
+                  >
+                    <BadgeInfo size={16} color="var(--input-border)" />
+                  </div>
                 </span>
+                {showWater && (
+                  <div className={blurbStyle}>
+                    <p>{waterBlurb}</p>
+                  </div>
+                )}
               </div>
             )}
             {product.soil && product.soil.length > 0 && (
