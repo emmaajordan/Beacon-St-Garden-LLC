@@ -33,7 +33,7 @@ const SUN_OPTIONS = [
   "Full Sun",
   "Part-Shade",
   "Part-Shade to Full-Shade",
-  "Full-Shade to Part-Shade",
+  "Part-Sun to Full-Sun",
   "Shade",
   "Dapple Shade",
   "Part Sun",
