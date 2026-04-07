@@ -140,9 +140,12 @@ export default function ContactPage() {
               rows={4}
               name="message"
               onChange={(e) => setUserMessage(e.target.value)}
-              maxLength={200}
+              maxLength={1000}
               className={`${contactStyles.input} resize-none`}
             ></textarea>
+            <p className={`text-xs text-right mt-1 ${userMessage.length >= 1000 ? 'text-[var(--rust)]' : 'text-[var(--input-border)]'}`}>
+              {userMessage.length} / 1000
+            </p>
 
             {/* Error message */}
             <div className="flex h-10 items-center">
