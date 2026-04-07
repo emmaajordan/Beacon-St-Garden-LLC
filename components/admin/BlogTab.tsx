@@ -69,6 +69,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  Search,
   Trash2,
   Upload, 
   X,
@@ -92,6 +93,15 @@ function formatDateTime(dateStr: string | null) {
   });
 }
 
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 const emptyForm = {
   title: "",
   excerpt: "",
@@ -101,9 +111,11 @@ const emptyForm = {
 };
 
 function AddPostModal({
+  imageList,
   onClose,
   onSuccess,
 }: {
+  imageList: any[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -113,6 +125,11 @@ function AddPostModal({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showImages, setShowImages] = useState(false);
+  const [copyNotification, setCopyNotification] = useState(false);
 
   const set = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -170,6 +187,25 @@ function AddPostModal({
     }
 
     setUploading(false);
+  };
+
+  const handleSearch = async (q: string) => {
+    setSearchQuery(q);
+    if (q.length < 2) { setSearchResults([]); return; }
+    const { data } = await supabase
+      .from("products")
+      .select("id, name, price, stock")
+      .ilike("name", `%${q}%`)
+      .limit(5);
+    setSearchResults(data || []);
+  };
+
+  const handleCopy = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopyNotification(true);
+    setTimeout(() => {
+      setCopyNotification(false);
+    }, 2000);
   };
 
   return (
@@ -261,7 +297,7 @@ function AddPostModal({
             </div>
 
             {/* published */}
-            <div>
+            <div className="mt-4">
               <label className={styles.labelClass}>Make visible on home page</label>
               <div className="flex items-center gap-2 mt-1">
                 <input
@@ -275,6 +311,76 @@ function AddPostModal({
                 </span>
               </div>
             </div>
+
+            {/* divider */}
+            <div className="border-t border-[var(--card-border)]" />
+
+            {/* Search Products */}
+            <div className="relative">
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--input-border)]"
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder="Search product urls..."
+                  className="w-full pl-8 pr-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)]"
+                />
+              </div>
+              {searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-[var(--header)] border border-[var(--card-border)] rounded-md shadow-md z-10 mt-1">
+                  {searchResults.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => handleCopy("placeholder link")}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--card-bg)] transition-colors"
+                    >
+                      <span>{p.name}</span>
+                      <span className="text-[var(--input-border)]">
+                        ${parseFloat(p.price).toFixed(2)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* List of Images */}
+            <button
+              className="flex items-center gap-2 mb-2 text-sm font-medium text-[var(--input-border)] border border-[var(--input-border)] px-3 py-1.5 rounded-md"
+              onClick={() => setShowImages(prev => !prev)}
+            >
+              {showImages ? 'Hide Images' : 'Browse Images'}
+              {showImages ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            {showImages && (
+              <div>
+                {imageList.length === 0 ? (
+                  <p className="text-sm text-[var(--input-border)] text-center py-12">
+                    No images uploaded yet.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-70 md:max-h-48 p-4 overflow-scroll border border-(--input-border) rounded-md">
+                    {imageList.map((image) => (
+                      <div key={image.id} className="relative">
+                        <div className="relative w-full aspect-square rounded-md overflow-hidden cursor-pointer active:scale-95 transition-transform duration-100">
+                          <Image 
+                          src={image.url}
+                          alt="image preview"
+                          fill
+                          className="object-cover hover:scale-105 transition-transform duration-200 overflow-hidden"
+                          onClick={() => handleCopy(image.url)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>    
+                )}
+              </div>
+            )}
 
             <div className={styles.sectionClass}>
               {error && (
@@ -296,6 +402,12 @@ function AddPostModal({
           </div>
         </div>
       </div>
+      {/* Copy notification */}
+      {copyNotification && (
+        <div className="absolute bottom-4 right-4 bg-[var(--teal)] text-white px-4 py-2 rounded-md text-sm font-medium shadow-lg">
+          Copied to clipboard!
+        </div>
+      )}
     </div>
   )
 }
@@ -618,6 +730,7 @@ function BlogPostRow({
               )}
             </div>
 
+            {/* Excerpt */}
             <div className="flex items-baseline justify-between py-2 mb-2 border-y border-dashed border-[var(--card-border)]">
               <span className="text-xs uppercase tracking-widest text-[var(--input-border)] flex-shrink-0 mr-4">
                 Excerpt
@@ -627,11 +740,15 @@ function BlogPostRow({
               </span>
             </div>
 
+            {/* Preview */}
             <div>
               <p className="text-xs uppercase tracking-widest text-[var(--input-border)] flex-shrink-0 mr-4 pb-2">
                 Preview 
               </p>
-              <div className="bg-white/40 border border-(--card-border) px-6">
+              <div className="bg-white/40 border border-(--card-border) p-6">
+                <h1 className="text-4xl font-bold py-1">{post.title}</h1>
+                <p className="text-sm text-(--input-border) py-2">{formatDate(post.created_at)}</p>
+                <hr className="mb-4 border-0 h-[2px] bg-(--card-border)" />
                 <MarkdownRenderer md={post.content}/>
               </div>
             </div>
@@ -839,6 +956,7 @@ function DeleteImageModal({
   )
 }
 
+
 export default function BlogTab() {
   const supabase = createClient();
   const [showModal, setShowModal] = useState(false);
@@ -873,7 +991,7 @@ export default function BlogTab() {
     if (!error){
       const imageData = data;
       let arr = [];
-      for (let i = 1; i < imageData.length; i++){
+      for (let i = imageData.length-1; i > 0; i--){
         const { data } = supabase
           .storage
           .from('blog-images')
@@ -901,6 +1019,7 @@ export default function BlogTab() {
 
   useEffect(() => {
     fetchPosts();
+    fetchImages();
   }, []);
 
   return (
@@ -936,10 +1055,9 @@ export default function BlogTab() {
           className="flex items-center justify-center gap-2 p-2 bg-[var(--card-bg)] cursor-pointer hover:bg-[var(--card-border)] transition-colors"
           onClick={() => {
             setImageExpanded((prev) => !prev);
-            fetchImages();
           }}
         >  
-          <p className="text-md font-medium text-[var(--text)]">Uploaded Images</p>
+          <p className="text-md font-medium text-[var(--text)]">Browse Uploaded Images</p>
           <span className="text-[var(--input-border)]">
             {imageExpanded ? <ChevronDown size={16} /> : <ChevronDown size={16} />}
           </span>
@@ -1010,6 +1128,7 @@ export default function BlogTab() {
 
       {(showModal && !showImgModal && !showDeleteModal) && (
         <AddPostModal
+          imageList={images.length > 0 ? images : []}
           onClose={() => setShowModal(false)}
           onSuccess={fetchPosts}
         />

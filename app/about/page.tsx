@@ -12,10 +12,11 @@ const styles = {
 export default function AboutPage() {
   return (
     <div>
-      <div className="w-full h-45 md:h-64 bg-cover bg-center" style={{backgroundImage: "url('/flowers.jpg')"}}></div>
+      <div className="w-full h-64 bg-cover bg-center" style={{backgroundImage: "url('/flowers.jpg')"}}></div>
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-6">About Us</h1>
         
+        {/* Our Story */}
         <section className={styles.section}>
           <div className="flex items-center gap-2">
             <h2 className={styles.heading}>Our Story</h2>
@@ -38,6 +39,7 @@ export default function AboutPage() {
           </p>
         </section>
 
+        {/* Our Mission */}
         <section className={styles.section}>
           <div className="flex items-center gap-2">
             <h2 className={styles.heading}>Our Mission</h2>
@@ -49,6 +51,7 @@ export default function AboutPage() {
           </p>
         </section>
 
+        {/* How We Grow */}
         <section className={styles.section}>
           <div className="flex items-center gap-2">
             <h2 className={styles.heading}>How We Grow</h2>
@@ -84,6 +87,7 @@ export default function AboutPage() {
           </ul>
         </section>
 
+        {/* What We Offer */}
         <section className={styles.section}>
           <div className="flex items-center gap-2">
             <h2 className={styles.heading}>What We Offer</h2>
@@ -99,6 +103,7 @@ export default function AboutPage() {
           </p>
         </section>
 
+        {/* Where To Find Us */}
         <section className={styles.section}>
           <div className="flex items-center gap-2">
             <h2 className={styles.heading}>Where To Find Us</h2>
@@ -116,6 +121,7 @@ export default function AboutPage() {
           </p>
         </section>
 
+        {/* Dog Friendly */}
         <section className={styles.section}>
           <div className="flex items-center gap-2">
             
@@ -128,6 +134,7 @@ export default function AboutPage() {
           </p>
         </section>
 
+        {/* Come Grow With Us */}
         <section className={styles.section}>
           <div className="flex items-center gap-2">
             <h2 className={styles.heading}>Come Grow With Us</h2>
@@ -135,25 +142,7 @@ export default function AboutPage() {
           </div>
           <p className={styles.text}>
             Whether you're a seasoned gardener or just getting started, we'd love to help you bring more beauty into your space.
-          </p>
-
-          {/* <div className="flex gap-4 mt-6 text-(--disabled-text)">
-            <Link href="/shop" className="px-4 py-2 bg-(--card-bg) rounded hover:bg-(--card-border)">
-              Shop
-            </Link>
-            <Link href="/contact" className="px-4 py-2 bg-(--card-bg) rounded hover:bg-(--card-border)">
-              Contact
-            </Link>
-            <a 
-              href="https://www.instagram.com/crfrencho/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="flex gap-2 items-center px-4 py-2 bg-(--card-bg) rounded hover:bg-(--card-border)">
-              <span>Follow Us</span>
-              <Instagram size={20}/>
-            </a>
-          </div> */}
-          
+          </p>  
         </section>
       </div>
     </div>
