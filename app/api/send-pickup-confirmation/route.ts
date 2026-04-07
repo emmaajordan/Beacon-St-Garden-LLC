@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     await transporter.sendMail({
       from: `Beacon Street Gardens <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: 'Your Pickup is Confirmed — Beacon Street Gardens',
+      subject: 'Your Pickup is Confirmed | Beacon Street Gardens',
       html: `
         <div style="font-family: Georgia, serif; max-width: 520px; margin: 0 auto; background: #F8F2F2; padding: 40px 32px;">
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
           <p style="font-size: 16px; color: #4D5143; margin: 0 0 8px 0;">Hi <strong>${name}</strong>,</p>
           <p style="font-size: 14px; color: #4D5143; line-height: 1.6; margin: 0 0 28px 0;">
-            Your pickup has been confirmed! We'll see you at the time below.
+            Your pickup has been confirmed! We'll see you at the time below. If this time no longer works, just reply to this email and we'll find a new time.
           </p>
 
           <h2 style="font-size: 11px; color: #9D9389; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 12px 0;">Pickup Time</h2>

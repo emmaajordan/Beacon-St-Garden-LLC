@@ -216,7 +216,7 @@ export default function ContactPage() {
           </span>
 
           <a
-            href="https://www.instagram.com/crfrencho/"
+            href="https://www.instagram.com/beaconstgardens/"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--rust)] transition-colors flex items-center gap-2"
@@ -225,7 +225,7 @@ export default function ContactPage() {
             <span>@beaconstgardens</span>
           </a>
           <a
-            href="https://www.instagram.com/crfrencho/"
+            href="https://www.instagram.com/beaconstgardens/"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--rust)] transition-colors flex items-center gap-2"

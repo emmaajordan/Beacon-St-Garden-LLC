@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     await transporter.sendMail({
       from: `Beacon Street Gardens <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: 'Thank You for Picking Up — Beacon Street Gardens',
+      subject: 'Thank You for Picking Up | Beacon Street Gardens',
       html: `
         <div style="font-family: Georgia, serif; max-width: 520px; margin: 0 auto; background: #F8F2F2; padding: 40px 32px;">
 

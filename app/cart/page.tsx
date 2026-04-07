@@ -50,7 +50,7 @@ export default function CartPage() {
   };
 
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + ((item.price ?? 0) * item.quantity),
     0,
   );
 
@@ -64,7 +64,7 @@ export default function CartPage() {
     setSubmitError("");
 
     try {
-      // build items list — only include products with a real id
+      // build items list
       const stockItems = cartItems
         .filter((item) => item.id)
         .map((item) => ({
@@ -135,7 +135,7 @@ export default function CartPage() {
             reservation_id: reservation.id,
             product_id: item.id,
             product_name: item.name,
-            price: item.price,
+            price: item.price ?? 0,
             quantity: item.quantity,
           })),
         );
@@ -273,7 +273,7 @@ export default function CartPage() {
                           {item.name}
                         </p>
                         <p className="text-xs text-[var(--input-border)]">
-                          ${item.price.toFixed(2)} each
+                          {item.price ? `$${item.price.toFixed(2)} each` : 'Price TBD'}
                         </p>
                       </div>
 
@@ -307,14 +307,18 @@ export default function CartPage() {
                   ))}
 
                   {/* subtotal row */}
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--card-border)] bg-[var(--header)]">
-                    <span className="font-semibold text-[var(--text)] text-sm">
-                      Total
-                    </span>
-                    <span className="text-lg font-semibold text-[var(--text)]">
-                      ${subtotal.toFixed(2)}
-                    </span>
+                  <div className="border-t border-[var(--card-border)] bg-[var(--header)]">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="font-semibold text-[var(--text)] text-sm">Total</span>
+                      <span className="text-lg font-semibold text-[var(--text)]">
+                        {cartItems.some(i => !i.price) ? `$${subtotal.toFixed(2)}*` : `$${subtotal.toFixed(2)}`}
+                      </span>
+                    </div>
+                    {cartItems.some(i => !i.price) && (
+                      <p className="text-xs italic text-[var(--input-border)] px-4 pb-3">* Prices marked TBD will be confirmed at pickup.</p>
+                    )}
                   </div>
+                  
                 </div>
 
                 {/* notice */}

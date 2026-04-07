@@ -21,6 +21,7 @@ type ReservationItem = {
   price: number;
   quantity: number;
   is_custom: boolean;
+  stock?: number;
 };
 
 type Reservation = {
@@ -113,44 +114,51 @@ function NewOrderModal({
 
     const itemRows = validItems.map(i => ({
       reservation_id: reservation.id,
-      product_id: null,
+      product_id:  i.product_id ?? null,
       product_name: i.product_name,
       price: parseFloat(i.price) || 0,
       quantity: parseInt(i.quantity) || 1,
       is_custom: true,
     }));
 
-    const { error: itemsError } = await supabase
-      .from('reservation_items')
-      .insert(itemRows);
+    // deduct stock first, before inserting items
+  for (const item of validItems) {
+    if (!item.product_id) continue;
 
-    if (itemsError) {
-      setError('Failed to add items: ' + itemsError.message);
+    const { data: freshProduct } = await supabase
+      .from('products')
+      .select('stock')
+      .eq('id', item.product_id)
+      .single();
+
+    if (!freshProduct || freshProduct.stock < parseInt(item.quantity)) {
+      setError(`Not enough stock for ${item.product_name}.`);
       setSaving(false);
       return;
     }
-    // deduct stock for non-custom items
-    for (const item of validItems) {
-      if (!item.product_id) continue;
 
-      const { data: freshProduct } = await supabase
-        .from('products')
-        .select('stock')
-        .eq('id', item.product_id)
-        .single();
+    const { error: stockError } = await supabase
+      .from('products')
+      .update({ stock: freshProduct.stock - parseInt(item.quantity) })
+      .eq('id', item.product_id)
+      .eq('stock', freshProduct.stock); // optimistic lock
 
-      if (!freshProduct || freshProduct.stock < parseInt(item.quantity)) {
-        setError(`Not enough stock for ${item.product_name}.`);
-        setSaving(false);
-        return;
-      }
-
-      await supabase
-        .from('products')
-        .update({ stock: freshProduct.stock - parseInt(item.quantity) })
-        .eq('id', item.product_id)
-        .eq('stock', freshProduct.stock);
+    if (stockError) {
+      setError(`Stock changed while saving. Please try again.`);
+      setSaving(false);
+      return;
     }
+  }
+
+  const { error: itemsError } = await supabase
+    .from('reservation_items')
+    .insert(itemRows);
+
+  if (itemsError) {
+    setError('Failed to add items: ' + itemsError.message);
+    setSaving(false);
+    return;
+  }
 
     if (form.email) {
       if (status === 'confirmed') {
@@ -577,6 +585,18 @@ function AddItemRow({
         return;
       }
 
+      const { error: stockError } = await supabase
+        .from("products")
+        .update({ stock: freshProduct.stock - 1 })
+        .eq("id", product.id)
+        .eq("stock", freshProduct.stock); // optimistic lock
+
+      if (stockError) {
+        setError("Stock was updated by someone else. Please try again.");
+        setAdding(false);
+        return;
+      }
+
       await supabase.from("reservation_items").insert({
         reservation_id: reservationId,
         product_id: product.id,
@@ -584,13 +604,7 @@ function AddItemRow({
         price: product.price,
         quantity: 1,
         is_custom: false,
-      });
-
-      await supabase
-        .from("products")
-        .update({ stock: freshProduct.stock - 1 })
-        .eq("id", product.id)
-        .eq("stock", freshProduct.stock); // optimistic lock
+      }); 
     }
     setQuery("");
     setResults([]);
@@ -757,6 +771,9 @@ function ReservationRow({
     reservation.reservation_items,
   );
   const [showAddItem, setShowAddItem] = useState(false);
+  useEffect(() => {
+    if (expanded) refreshItems();
+  }, [expanded]);
 
   const calculatedTotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -769,37 +786,90 @@ function ReservationRow({
       .select("*")
       .eq("reservation_id", reservation.id);
     if (data) {
-      setItems(data);
-      setFinalCost(
-        data.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2),
-      );
+      const itemsWithStock = await Promise.all(data.map(async (item) => {
+        if (!item.product_id) return item;
+        const { data: product } = await supabase
+          .from("products").select("stock").eq("id", item.product_id).single();
+        return { ...item, stock: (product?.stock ?? 0) + item.quantity }; // add back reserved qty so cap is correct
+      }));
+      setItems(itemsWithStock);
+      setRemovedItemIds([]);
+      setFinalCost(data.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2));
     }
     onUpdate();
   };
 
+  const saveItemChanges = async () => {
+    // delete removed items and restore their stock
+    for (const itemId of removedItemIds) {
+      const original = reservation.reservation_items.find(i => i.id === itemId);
+      if (original?.product_id) {
+        const { data: product } = await supabase
+          .from("products").select("stock").eq("id", original.product_id).single();
+        if (product) {
+          await supabase.from("products")
+            .update({ stock: product.stock + original.quantity })
+            .eq("id", original.product_id);
+        }
+      }
+      await supabase.from("reservation_items").delete().eq("id", itemId);
+    }
+
+    // update quantities and adjust stock for changed items
+    for (const item of items) {
+      const original = reservation.reservation_items.find(i => i.id === item.id);
+      if (!original) continue;
+      const diff = item.quantity - original.quantity;
+      if (diff !== 0 && item.product_id) {
+        const { data: product } = await supabase
+          .from("products").select("stock").eq("id", item.product_id).single();
+        if (!product) continue;
+        if (diff > 0 && product.stock < diff) {
+          setError(`Not enough stock for ${item.product_name}.`);
+          return false;
+        }
+        const { error: stockError } = await supabase
+          .from("products")
+          .update({ stock: product.stock - diff })
+          .eq("id", item.product_id)
+          .eq("stock", product.stock);
+        if (stockError) {
+          setError("Stock changed while saving. Please try again.");
+          return false;
+        }
+      }
+      if (diff !== 0) {
+        await supabase.from("reservation_items")
+          .update({ quantity: item.quantity })
+          .eq("id", item.id);
+      }
+    }
+    return true;
+  };
+
+  const [removedItemIds, setRemovedItemIds] = useState<string[]>([]);
+
   const handleRemoveItem = async (itemId: string) => {
-    await supabase.from("reservation_items").delete().eq("id", itemId);
-    refreshItems();
+    setRemovedItemIds(prev => [...prev, itemId]);
+   setItems(prev => prev.filter(i => i.id !== itemId));
   };
 
   const handleUpdateQuantity = async (itemId: string, qty: number) => {
     if (qty < 1) return;
-    await supabase
-      .from("reservation_items")
-      .update({ quantity: qty })
-      .eq("id", itemId);
-    refreshItems();
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const max = item.stock !== undefined ? item.stock : Infinity;
+    if (qty > max) return;
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, quantity: qty } : i));
   };
 
+  
   const handleConfirm = async () => {
-    if (!pickupTime) {
-      setError("Please set a pickup time first.");
-      console.log("sending to:", reservation.email);
-      return;
-    }
-    console.log("sending to:", reservation.email);
+    if (!pickupTime) { setError("Please set a pickup time first."); return; }
     setSaving(true);
     setError("");
+    const ok = await saveItemChanges();
+    if (!ok) { setSaving(false); return; }
 
     const { error: updateError } = await supabase
       .from("reservations")
@@ -839,6 +909,9 @@ function ReservationRow({
   const handleSaveConfirmed = async () => {
     setSaving(true);
     setError("");
+    const ok = await saveItemChanges();
+    if (!ok) { setSaving(false); return; }
+
     const { error: updateError } = await supabase
       .from("reservations")
       .update({
@@ -855,6 +928,8 @@ function ReservationRow({
   const handleComplete = async () => {
     setSaving(true);
     setError("");
+    const ok = await saveItemChanges();
+    if (!ok) { setSaving(false); return; }
     const { error: updateError } = await supabase
       .from("reservations")
       .update({
@@ -891,6 +966,23 @@ function ReservationRow({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleDelete = async () => {
+    //restore stock first
+    if (reservation.status !== "completed") {
+    for (const item of items) {
+      if (!item.product_id) continue;
+      const { data: product } = await supabase
+        .from("products")
+        .select("stock")
+        .eq("id", item.product_id)
+        .single();
+      if (product) {
+        await supabase
+          .from("products")
+          .update({ stock: product.stock + item.quantity })
+          .eq("id", item.product_id);
+      }
+    }
+  }
     await supabase.from("reservations").delete().eq("id", reservation.id);
     onUpdate();
   };
@@ -1002,9 +1094,13 @@ function ReservationRow({
                   
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() =>
-                          handleUpdateQuantity(item.id, item.quantity - 1)
-                        }
+                        onClick={() => {
+                          if (item.quantity <= 1) {
+                            handleRemoveItem(item.id);
+                          } else {
+                            handleUpdateQuantity(item.id, item.quantity - 1);
+                          }
+                        }}
                         className="w-6 h-6 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded flex items-center justify-center text-xs font-bold text-white transition-colors"
                       >
                         −
@@ -1013,10 +1109,13 @@ function ReservationRow({
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() =>
-                          handleUpdateQuantity(item.id, item.quantity + 1)
-                        }
-                        className="w-6 h-6 bg-[var(--teal)] hover:bg-[var(--teal-hover)] rounded flex items-center justify-center text-xs font-bold text-white transition-colors"
+                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          disabled={item.stock !== undefined && item.quantity >= item.stock}
+                          className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-colors ${
+                            item.stock !== undefined && item.quantity >= item.stock
+                              ? "bg-[var(--button-gray)] text-white cursor-not-allowed opacity-50"
+                              : "bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white"
+                          }`}
                       >
                         +
                       </button>
