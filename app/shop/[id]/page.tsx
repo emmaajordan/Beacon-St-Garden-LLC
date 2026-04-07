@@ -89,7 +89,9 @@ function ProductPageContent() {
         {/* mobile only*/}
         <div className="sm:hidden mb-4">
           <p className="text-xs uppercase tracking-widest text-[var(--input-border)] mb-2">
-            {product.category ?? "From the Garden"}
+            {Array.isArray(product.category)
+              ? product.category.join(" · ")
+              : product.category ?? "From the Garden"}  
           </p>
           <h1 className="text-3xl font-semibold text-[var(--text)] mb-2">
             {product.name}
@@ -127,7 +129,9 @@ function ProductPageContent() {
             {/* category + name — desktop only */}
             <div className="hidden sm:block">
               <p className="text-xs uppercase tracking-widest text-[var(--input-border)] mb-2">
-                {product.category ?? "From the Garden"}
+                {Array.isArray(product.category)
+                  ? product.category.join(" · ")
+                  : product.category ?? "From the Garden"}
               </p>
               <h1 className="text-4xl font-semibold text-[var(--text)] mb-3">
                 {product.name}

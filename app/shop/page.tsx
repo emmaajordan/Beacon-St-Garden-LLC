@@ -58,8 +58,10 @@ export default function ShopPage() {
 
     // apply a category filter
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((p) =>
-        selectedCategories.includes(p.category),
+      filtered = filtered.filter(p =>
+        Array.isArray(p.category)
+          ? p.category.some((c: string) => selectedCategories.includes(c))
+          : selectedCategories.includes(p.category)
       );
     }
 
@@ -193,6 +195,7 @@ export default function ShopPage() {
                     "Annual",
                     "Perennial",
                     "House Plant",
+                    "Ornamental Foliage",
                   ].map((category) => (
                     <label
                       key={category}

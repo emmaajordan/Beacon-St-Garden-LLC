@@ -40,6 +40,7 @@ const CATEGORY_OPTIONS = [
   "Annual",
   "Perennial",
   "House Plant",
+  "Ornamental Foliage",
 ];
 const LIFE_SPAN_OPTIONS = ["Annual", "Perennial"];
 
@@ -47,7 +48,7 @@ const emptyForm = {
   name: "",
   description: "",
   price: "",
-  category: "",
+  category: [] as string[],
   sun: "",
   light: "",
   watering: "",
@@ -96,6 +97,15 @@ function AddProductModal({
     }));
   };
 
+  const toggleCategory = (val: string) => {
+    setForm((prev) => ({
+      ...prev,
+      category: prev.category.includes(val)
+        ? prev.category.filter((c: string) => c !== val)
+        : [...prev.category, val],
+    }));
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -137,7 +147,7 @@ function AddProductModal({
       name: form.name,
       description: form.description || null,
       price: form.price ? parseFloat(form.price) : null,
-      category: form.category || null,
+      category: form.category.length > 0 ? form.category : null,
       sun: form.sun || null,
       light: form.light || null,
       watering: form.watering || null,
@@ -259,18 +269,22 @@ function AddProductModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Category</label>
-                <select
-                  value={form.category}
-                  onChange={(e) => set("category", e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">Select...</option>
-                  {CATEGORY_OPTIONS.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {CATEGORY_OPTIONS.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => toggleCategory(cat)}
+                      className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors ${
+                        form.category.includes(cat)
+                          ? "bg-[var(--teal)] text-white border-[var(--teal)]"
+                          : "bg-[var(--header)] text-[var(--text)] border-[var(--input-border)] hover:border-[var(--teal)]"
+                      }`}
+                    >
+                      {cat}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
               <div>
                 <label className={labelClass}>Availability</label>
@@ -491,7 +505,7 @@ function ProductRow({
     name: product.name ?? "",
     description: product.description ?? "",
     price: product.price ?? "",
-    category: product.category ?? "",
+    category: product.category ?? Array.isArray(product.category) ? product.category : product.category ? [product.category] : [],
     sun: product.sun ?? "",
     light: product.light ?? "",
     watering: product.watering ?? "",
@@ -517,6 +531,15 @@ function ProductRow({
       soil: prev.soil.includes(val)
         ? prev.soil.filter((s: string) => s !== val)
         : [...prev.soil, val],
+    }));
+  };
+
+  const toggleCategory = (val: string) => {
+    setForm((prev) => ({
+      ...prev,
+      category: prev.category.includes(val)
+        ? prev.category.filter((c: string) => c !== val)
+        : [...prev.category, val],
     }));
   };
 
@@ -561,7 +584,7 @@ function ProductRow({
       name: form.name,
       description: form.description || null,
       price: form.price !== "" ? parseFloat(String(form.price)) : null,
-      category: form.category || null,
+      category: form.category.length > 0 ? form.category : null,
       sun: form.sun || null,
       light: form.light || null,
       watering: form.watering || null,
@@ -663,7 +686,9 @@ function ProductRow({
             {product.name}
           </p>
           <p className="text-xs text-[var(--input-border)]">
-            {product.category ?? "—"}
+            {Array.isArray(product.category) 
+              ? product.category.join(" · ") 
+              : product.category ?? "—"}
           </p>
           <p className="text-xs text-[var(--input-border)] sm:hidden">
             {product.price > 0
@@ -809,18 +834,22 @@ function ProductRow({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Category</label>
-                    <select
-                      value={form.category}
-                      onChange={(e) => set("category", e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="">Select...</option>
-                      {CATEGORY_OPTIONS.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {CATEGORY_OPTIONS.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleCategory(cat)}
+                          className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors ${
+                            form.category.includes(cat)
+                              ? "bg-[var(--teal)] text-white border-[var(--teal)]"
+                              : "bg-[var(--header)] text-[var(--text)] border-[var(--input-border)] hover:border-[var(--teal)]"
+                          }`}
+                        >
+                          {cat}
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
                   <div>
                     <label className={labelClass}>Availability</label>
