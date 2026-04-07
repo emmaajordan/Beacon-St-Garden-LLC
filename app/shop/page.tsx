@@ -2,9 +2,10 @@
 
 import ProductCard from "@/components/shop/ProductCard";
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/supabase";
 import { Loader2, SlidersHorizontal, ChevronUp, ChevronDown} from "lucide-react";
+
 
 export default function ShopPage() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -12,34 +13,43 @@ export default function ShopPage() {
 
   const searchParams = useSearchParams();
 
-  // filter states
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-    const category = searchParams.get("category");
-    return category ? [category] : [];
-  });
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
-    [],
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const selectedCategories = searchParams.getAll('category');
+  const selectedAvailability = searchParams.getAll('availability');
+  const searchQuery = searchParams.get('search') ?? '';
+  const sortBy = searchParams.get('sort') ?? 'newest';
+
+  const updateParams = (updates: Record<string, string | string[]>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      params.delete(key);
+      if (Array.isArray(value)) {
+        value.forEach(v => params.append(key, v));
+      } else if (value) {
+        params.set(key, value);
+      }
+    });
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // toggle filter selections
   const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category],
-    );
+    const next = selectedCategories.includes(category)
+      ? selectedCategories.filter(c => c !== category)
+      : [...selectedCategories, category];
+    updateParams({ category: next });
   };
 
   const toggleAvailability = (availability: string) => {
-    setSelectedAvailability((prev) =>
-      prev.includes(availability)
-        ? prev.filter((a) => a !== availability)
-        : [...prev, availability],
-    );
+    const next = selectedAvailability.includes(availability)
+      ? selectedAvailability.filter(a => a !== availability)
+      : [...selectedAvailability, availability];
+    updateParams({ availability: next });
   };
+  const setSearchQuery = (q: string) => updateParams({ search: q });
+  const setSortBy = (s: string) => updateParams({ sort: s });
 
   // filter & sort products
   const filteredProducts = useMemo(() => {
@@ -226,11 +236,7 @@ export default function ShopPage() {
 
               {/*clears all filters*/}
               <button
-                onClick={() => {
-                  setSelectedCategories([]);
-                  setSelectedAvailability([]);
-                  setSearchQuery("");
-                }}
+                onClick={() => router.push(pathname, { scroll: false })}
                 className="w-full bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white py-1.5 md:py-2 px-4 rounded-md transition-colors font-medium text-xs md:text-sm"
               >
                 Clear Filters
@@ -293,11 +299,7 @@ export default function ShopPage() {
                   No products found matching your filters.
                 </p>
                 <button
-                  onClick={() => {
-                    setSelectedCategories([]);
-                    setSelectedAvailability([]);
-                    setSearchQuery("");
-                  }}
+                  onClick={() => router.push(pathname, { scroll: false })}
                   className="mt-4 text-[var(--rust)] hover:underline"
                 >
                   Clear all filters
