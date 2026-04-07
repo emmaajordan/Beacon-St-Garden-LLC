@@ -51,7 +51,13 @@ export default function ShopPage() {
   const setSearchQuery = (q: string) => updateParams({ search: q });
   const setSortBy = (s: string) => updateParams({ sort: s });
   const selectedSun = searchParams.getAll('sun');
-  const [sunOpen, setSunOpen] = useState(false);
+  const categoryOpen = searchParams.get('catOpen') !== 'false';
+  const sunOpen = searchParams.get('sunOpen') === 'true';
+  const availabilityOpen = searchParams.get('availOpen') === 'true';
+
+  const setCategoryOpen = (val: boolean) => updateParams({ catOpen: val ? 'true' : 'false' });
+  const setSunOpen = (val: boolean) => updateParams({ sunOpen: val ? 'true' : 'false' });
+  const setAvailabilityOpen = (val: boolean) => updateParams({ availOpen: val ? 'true' : 'false' });
   const toggleSun = (sun: string) => {
   const next = selectedSun.includes(sun)
       ? selectedSun.filter(s => s !== sun)
@@ -208,9 +214,15 @@ export default function ShopPage() {
 
               {/*category*/}
               <div className="mb-3 md:mb-5">
-                <h4 className="font-medium text-[var(--text)] mb-1.5 text-xs md:text-sm">
-                  Category
-                </h4>
+                <button
+                  type="button"
+                  onClick={() => setCategoryOpen(prev => !prev)}
+                  className="flex items-center gap-1 font-medium text-[var(--text)] hover:text-[var(--rust)] mb-1.5 text-xs md:text-sm transition-colors group"
+                >
+                  <span>Category</span>
+                  {categoryOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                </button>
+                {categoryOpen && (
                 <div className="flex flex-wrap gap-x-3 gap-y-1 md:block md:space-y-1.5">
                   {/*TO ADD MORE CATEGORIES, ADD TO LIST BELOW*/}
                   {[
@@ -235,19 +247,17 @@ export default function ShopPage() {
                       <span className="text-sm">{category}</span>
                     </label>
                   ))}
-                </div>
+                </div>)}
               </div>
               {/*sun*/}
               <div className="mb-3 md:mb-5">
                 <button
                   type="button"
                   onClick={() => setSunOpen(prev => !prev)}
-                  className="flex items-center justify-between w-full font-medium text-[var(--text)] mb-1.5 text-xs md:text-sm"
+                  className="flex items-center gap-1 font-medium text-[var(--text)] hover:text-[var(--rust)] mb-1.5 text-xs md:text-sm transition-colors group"
                 >
                   <span>Sun</span>
-                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[var(--card-border)] hover:bg-[var(--button-gray)] transition-colors text-[var(--text)]">
-                    {sunOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-                  </span>
+                  {sunOpen ? <ChevronUp size={11} className="group-hover:text-[var(--rust)] transition-colors" /> : <ChevronDown size={11} className="group-hover:text-[var(--rust)] transition-colors" />}
                 </button>
                 {sunOpen && (
                   <div className="flex flex-wrap gap-x-3 gap-y-1 md:block md:space-y-1.5">
@@ -271,9 +281,15 @@ export default function ShopPage() {
 
               {/*availability*/}
               <div className="mb-5">
-                <h4 className="font-medium text-[var(--text)] mb-1.5 text-xs md:text-sm">
-                  Availability
-                </h4>
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityOpen(prev => !prev)}
+                  className="flex items-center gap-1 font-medium text-[var(--text)] hover:text-[var(--rust)] mb-1.5 text-xs md:text-sm transition-colors group"
+                >
+                  <span>Availability</span>
+                  {availabilityOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                </button>
+                {availabilityOpen && (
                 <div className="flex flex-wrap gap-x-3 gap-y-1 md:block md:space-y-1.5">
                   {/*TO ADD DIFFERENT AVAILABILITY, ADD TO LIST BELOW*/}
                   {["Ready Now", "Coming Soon"].map((availability) => (
@@ -290,7 +306,7 @@ export default function ShopPage() {
                       <span className="text-sm">{availability}</span>
                     </label>
                   ))}
-                </div>
+                </div>)}
               </div>
 
               {/*clears all filters*/}
