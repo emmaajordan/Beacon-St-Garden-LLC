@@ -90,13 +90,13 @@ export default function ShopPage() {
   };
 
   const SUN_FILTER_GROUPS: Record<string, string[]> = {
-    "Full Sun":                    ["Full Sun", "Part Sun"],
-    "Part Sun":                    ["Part Sun", "Full Sun", "Part-Shade"],
-    "Part-Shade":                  ["Part-Shade", "Part-Shade to Full-Shade", "Full-Shade to Part-Shade", "Part Sun"],
-    "Part-Shade to Full-Shade":    ["Part-Shade to Full-Shade", "Part-Shade", "Shade", "Full-Shade to Part-Shade"],
-    "Full-Shade to Part-Shade":    ["Full-Shade to Part-Shade", "Part-Shade", "Shade", "Part-Shade to Full-Shade"],
-    "Shade":                       ["Shade", "Dapple Shade", "Part-Shade to Full-Shade", "Full-Shade to Part-Shade"],
-    "Dapple Shade":                ["Dapple Shade", "Shade", "Part-Shade"],
+    "Full Sun":                    ["Full Sun", "Part-Sun to Full-Sun"],
+    "Part Sun":                    ["Part Sun", "Part-Sun to Full-Sun"],
+    "Part-Shade":                  ["Part-Shade", "Part-Shade to Full-Shade"],
+    "Part-Shade to Full-Shade":    ["Part-Shade to Full-Shade", "Part-Shade", "Shade"],
+    "Part-Sun to Full-Sun":        ["Full-Sun", "Part Sun", "Part-Sun to Full-Sun"],
+    "Shade":                       ["Shade", "Part-Shade to Full-Shade"],
+    "Dapple Shade":                ["Dapple Shade", "Part-Shade"],
   };
   // filter & sort products
   const filteredProducts = useMemo(() => {
