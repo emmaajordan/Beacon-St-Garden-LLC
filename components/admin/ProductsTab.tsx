@@ -24,6 +24,8 @@ const SOIL_OPTIONS = [
   "wet",
   "nutrient-poor",
   "sandy or gravely",
+  "fertile",
+  "loose",
 ];
 const SUN_OPTIONS = [
   "Full Sun",
