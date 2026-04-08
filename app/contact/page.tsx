@@ -9,9 +9,8 @@ import { CircleAlert } from "lucide-react";
 const contactStyles = {
   h2: "text-xl font-semibold text-nowrap mb-2",
   infoSpan: "flex gap-4 items-center",
-  label: "block text-md font-semibold mb-1",
-  input:
-    "w-full bg-(--header) border border-gray-300 rounded-sm shadow-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-(--input-border)",
+  label: "block text-base font-medium text-[var(--text)] mb-1",
+  input: "w-full px-3 py-2 bg-[var(--header)] border border-[var(--input-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--teal)] text-sm text-[var(--text)]",
 };
 
 // Decorative line
@@ -30,11 +29,7 @@ export default function ContactPage() {
   const emailRegex =
     /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
-  /* TODO: Handle form submission
-     - use Web3Forms to send email?
-     - loading icon during api calls
-  */
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (userName.length === 0 || userEmail.length === 0 || userMessage.length === 0) {
       setErrMessage("Please fill out all fields");
@@ -100,12 +95,16 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="bg-(--header)">
-      <h1 className="text-3xl font-medium text-center my-6">Contact</h1>
-      <hr className="border-0 h-[2px] bg-gradient-to-r from-transparent via-(--card-border) to-transparent" />
-      <div className="relative flex flex-col-reverse md:flex-row max-w-5xl mx-auto my-8 gap-8 md:gap-0">
+    <div className="bg-(--header) mx-auto px-4 md:px-8 py-6 md:py-10 max-w-5xl">
+      {/* page title */}
+      <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text)] mb-2 text-center">
+        Contact Us
+      </h1>
+      <div className="border-t border-[var(--card-border)] mb-8" />
+
+      <div className="relative flex flex-col md:flex-row my-8 gap-8">
         {/* Contact form */}
-        <div className="relative w-auto md:w-1/2 mx-6">
+        <div className="relative w-auto md:w-1/2 order-2 md:order-1">
           <form
             onSubmit={handleSubmit}
             className="p-6 bg-(--secondary) shadow-md rounded-lg"
@@ -168,7 +167,7 @@ export default function ContactPage() {
         </div>
 
         {/* Store Information */}
-        <div className="relative w-auto md:w-1/2 mx-6 p-6 bg-(--secondary) shadow-md rounded-lg space-y-1">
+        <div className="relative w-auto md:w-1/2 p-6 bg-(--secondary) shadow-md rounded-lg space-y-1 order-1 md:order-2">
           {/* Email */}
           <span className={`${contactStyles.infoSpan}`}>
             <h2 className={`${contactStyles.h2}`}>Email</h2>
@@ -193,28 +192,11 @@ export default function ContactPage() {
             <p>Pittsburgh, PA 15217</p>
           </address>
 
-          {/* Location
-          <span className={`${contactStyles.infoSpan}`}>
-            <h2 className={`${contactStyles.h2}`}>Location</h2>
-            <DecLine />
-          </span>
-          <p>Address line 1</p>
-          <p className="mb-5">Address line 2</p> */}
-
-          {/* Pickup Details */}
-          {/* <span className={`${contactStyles.infoSpan}`}>
-            <h2 className={`${contactStyles.h2}`}>Pickup</h2>
-            <DecLine />
-          </span>
-          <p className="mb-5">You can reserve items online for scheduled pickup</p> */}
-
           {/* Social Media */}
-          {/* TODO - make links */}
           <span className={`${contactStyles.infoSpan}`}>
             <h2 className={`${contactStyles.h2}`}>Follow Us</h2>
             <DecLine />
           </span>
-
           <a
             href="https://www.instagram.com/beaconstgardens/"
             target="_blank"
