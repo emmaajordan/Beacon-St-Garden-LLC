@@ -140,8 +140,10 @@ export default function ShopPage() {
 
     // apply search
     if (searchQuery) {
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        p.name.toLowerCase().includes(q) ||
+        (p.group_name && p.group_name.toLowerCase().includes(q))
       );
     }
 
@@ -192,21 +194,30 @@ export default function ShopPage() {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("*, product_groups(name)")
         .eq("showing", true)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching products:", error);
       } else {
-        setAllProducts(data || []);
+        const products = (data || []).map((p: any) => ({
+          ...p,
+          group_name: p.product_groups?.name ?? null,
+        }));
+        setAllProducts(products);
+        console.log("products with groups:", products.map(p => ({ name: p.name, group_id: p.group_id, group_name: p.group_name })));
         setCurrentPage(1);
       }
       setLoading(false);
+      
     };
 
     fetchProducts();
+    
   }, []);
+
+  
 
   return (
     <div className="min-h-screen bg-[var(--header)]">

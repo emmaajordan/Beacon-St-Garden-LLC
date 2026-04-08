@@ -15,6 +15,7 @@ import {
   Ban,
   ChevronLeft,
   ChevronRight,
+  Layers,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -69,6 +70,7 @@ const emptyForm = {
   stock: "",
   showing: true,
   image_url: "",
+  group_id: "",
 };
 
 const labelClass =
@@ -190,6 +192,205 @@ function ImageManager({
   );
 }
 
+function ManageGroupsModal({ onClose }: { onClose: () => void }) {
+  const supabase = createClient();
+  const [groups, setGroups] = useState<{ id: string; name: string; count?: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  const fetchGroups = async () => {
+    const { data: groupData } = await supabase
+      .from("product_groups")
+      .select("id, name")
+      .order("name");
+
+    if (!groupData) { setLoading(false); return; }
+
+    const { data: productData } = await supabase
+      .from("products")
+      .select("group_id")
+      .not("group_id", "is", null);
+
+    const countMap: Record<string, number> = {};
+    (productData ?? []).forEach((p: any) => {
+      if (p.group_id) countMap[p.group_id] = (countMap[p.group_id] ?? 0) + 1;
+    });
+
+    setGroups(groupData.map(g => ({ ...g, count: countMap[g.id] ?? 0 })));
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchGroups(); }, []);
+
+  const handleCreate = async () => {
+    const trimmed = newGroupName.trim();
+    if (!trimmed) return;
+    setCreating(true);
+    setError("");
+    const { error } = await supabase.from("product_groups").insert({ name: trimmed });
+    if (error) setError("Failed to create: " + error.message);
+    else { setNewGroupName(""); await fetchGroups(); }
+    setCreating(false);
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    const trimmed = editingName.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    setError("");
+    const { error } = await supabase.from("product_groups").update({ name: trimmed }).eq("id", id);
+    if (error) setError("Failed to rename: " + error.message);
+    else { setEditingId(null); await fetchGroups(); }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from("products").update({ group_id: null }).eq("group_id", id);
+    await supabase.from("product_groups").delete().eq("id", id);
+    setConfirmDeleteId(null);
+    await fetchGroups();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="relative bg-[var(--header)] rounded-lg shadow-xl border border-[var(--card-border)] w-full max-w-lg mx-4 max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--card-border)]">
+          <div className="flex items-center gap-2">
+            <Layers size={16} className="text-[var(--input-border)]" />
+            <h2 className="text-lg font-semibold text-[var(--text)]">Manage Groups</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--card-bg)] hover:bg-[var(--card-border)] transition-colors text-[var(--text)]"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="mb-6">
+            <label className={labelClass}>New Group</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                className={`${inputClass} flex-1`}
+              />
+              <button
+                type="button"
+                onClick={handleCreate}
+                disabled={creating || !newGroupName.trim()}
+                className="flex items-center gap-1.5 px-4 py-2 bg-[var(--rust)] hover:bg-[var(--dark-rust)] text-white text-sm rounded-md transition-colors disabled:opacity-50 font-medium"
+              >
+                {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                Add
+              </button>
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-[var(--rust)] mb-4">{error}</p>}
+
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 size={24} className="animate-spin text-[var(--teal)]" />
+            </div>
+          ) : groups.length === 0 ? (
+            <p className="text-sm text-[var(--input-border)] text-center py-8">No groups yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {groups.map((group) => (
+                <div key={group.id} className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg px-4 py-3">
+                  {editingId === group.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSaveEdit(group.id)}
+                        className={`${inputClass} flex-1`}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleSaveEdit(group.id)}
+                        disabled={saving}
+                        className="px-3 py-1.5 bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white text-xs rounded-md transition-colors disabled:opacity-50"
+                      >
+                        {saving ? "..." : "Save"}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="px-3 py-1.5 border border-[var(--card-border)] text-[var(--text)] text-xs rounded-md hover:bg-[var(--card-border)] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : confirmDeleteId === group.id ? (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-[var(--text)]">
+                        Delete <span className="font-medium">{group.name}</span>?{" "}
+                        <span className="text-[var(--input-border)]">
+                          ({group.count} product{group.count !== 1 ? "s" : ""} will be ungrouped)
+                        </span>
+                      </p>
+                      <div className="flex gap-2 flex-shrink-0 ml-3">
+                        <button
+                          onClick={() => handleDelete(group.id)}
+                          className="px-3 py-1.5 bg-[var(--rust)] hover:bg-[var(--dark-rust)] text-white text-xs rounded-md transition-colors"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-3 py-1.5 border border-[var(--card-border)] text-[var(--text)] text-xs rounded-md hover:bg-[var(--card-border)] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text)]">{group.name}</p>
+                        <p className="text-xs text-[var(--input-border)]">
+                          {group.count} product{group.count !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => { setEditingId(group.id); setEditingName(group.name); setConfirmDeleteId(null); }}
+                          className="flex items-center gap-1 text-xs text-[var(--input-border)] hover:text-[var(--teal)] transition-colors"
+                        >
+                          <Pencil size={12} /> Rename
+                        </button>
+                        <span className="text-[var(--card-border)]">|</span>
+                        <button
+                          onClick={() => { setConfirmDeleteId(group.id); setEditingId(null); }}
+                          className="flex items-center gap-1 text-xs text-[var(--input-border)] hover:text-[var(--rust)] transition-colors"
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AddProductModal({
   onClose,
   onSuccess,
@@ -203,6 +404,32 @@ function AddProductModal({
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [creatingGroup, setCreatingGroup] = useState(false);
+
+  useEffect(() => {
+    supabase.from("product_groups").select("id, name").order("name").then(({ data }) => {
+      setGroups(data ?? []);
+    });
+  }, []);
+
+  const handleCreateGroup = async () => {
+    const trimmed = newGroupName.trim();
+    if (!trimmed) return;
+    setCreatingGroup(true);
+    const { data, error } = await supabase
+      .from("product_groups")
+      .insert({ name: trimmed })
+      .select("id, name")
+      .single();
+    if (!error && data) {
+      setGroups((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      set("group_id", data.id);
+      setNewGroupName("");
+    }
+    setCreatingGroup(false);
+  };
 
   const set = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -279,6 +506,7 @@ function AddProductModal({
       showing: form.showing,
       image_url: allImageUrls[0] || null,
       image_urls: allImageUrls.length > 0 ? allImageUrls : null,
+      group_id: form.group_id || null,
     });
 
     if (insertError) {
@@ -409,6 +637,37 @@ function AddProductModal({
                 <span className="text-sm text-[var(--text)]">
                   Visible to customers
                 </span>
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Product Group (Varieties)</label>
+              <select
+                value={form.group_id}
+                onChange={(e) => set("group_id", e.target.value)}
+                className={inputClass}
+              >
+                <option value="">— No group —</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  placeholder="Create new group..."
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateGroup()}
+                  className={`${inputClass} flex-1`}
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateGroup}
+                  disabled={creatingGroup || !newGroupName.trim()}
+                  className="px-3 py-2 bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white text-xs rounded-md transition-colors disabled:opacity-50"
+                >
+                  {creatingGroup ? "..." : "Add"}
+                </button>
               </div>
             </div>
           </div>
@@ -622,8 +881,34 @@ function ProductRow({
     stock: product.stock ?? 0,
     showing: product.showing ?? true,
     image_url: product.image_url ?? "",
+    group_id: product.group_id ?? "",
   });
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [creatingGroup, setCreatingGroup] = useState(false);
 
+  useEffect(() => {
+    supabase.from("product_groups").select("id, name").order("name").then(({ data }) => {
+      setGroups(data ?? []);
+    });
+  }, []);
+
+  const handleCreateGroup = async () => {
+    const trimmed = newGroupName.trim();
+    if (!trimmed) return;
+    setCreatingGroup(true);
+    const { data, error } = await supabase
+      .from("product_groups")
+      .insert({ name: trimmed })
+      .select("id, name")
+      .single();
+    if (!error && data) {
+      setGroups((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      set("group_id", data.id);
+      setNewGroupName("");
+    }
+    setCreatingGroup(false);
+  };
   const set = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -699,6 +984,7 @@ function ProductRow({
       showing: form.showing,
       image_url: allImageUrls[0] || null,
       image_urls: allImageUrls.length > 0 ? allImageUrls : null,
+      group_id: form.group_id || null,
     };
 
     const { error: updateError } = await supabase
@@ -709,7 +995,7 @@ function ProductRow({
     if (updateError) {
       setError("Failed to save: " + updateError.message);
     } else {
-      onUpdate({ ...product, ...updates });
+      await onDelete();
       setEditing(false);
     }
 
@@ -789,9 +1075,16 @@ function ProductRow({
 
         {/* name + category + mobile summary */}
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-[var(--text)] text-sm truncate">
-            {product.name}
-          </p>
+          <div className="flex items-center gap-3 min-w-0">
+            <p className="font-medium text-[var(--text)] text-sm truncate">
+              {product.name}
+            </p>
+            {product.group_name && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-[var(--input-border)] text-[var(--input-border)] flex-shrink-0">
+                {product.group_name}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-[var(--input-border)]">
             {Array.isArray(product.category) 
               ? product.category.join(" · ") 
@@ -805,6 +1098,7 @@ function ProductRow({
               {product.stock} in stock
             </span>
           </p>
+          
         </div>
 
         {/* price*/}
@@ -958,6 +1252,37 @@ function ProductRow({
                     <span className="text-sm text-[var(--text)]">
                       Visible to customers
                     </span>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Product Group (Varieties)</label>
+                  <select
+                    value={form.group_id}
+                    onChange={(e) => set("group_id", e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">— No group —</option>
+                    {groups.map((g) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      placeholder="Create new group..."
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCreateGroup()}
+                      className={`${inputClass} flex-1`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateGroup}
+                      disabled={creatingGroup || !newGroupName.trim()}
+                      className="px-3 py-2 bg-[var(--teal)] hover:bg-[var(--teal-hover)] text-white text-xs rounded-md transition-colors disabled:opacity-50"
+                    >
+                      {creatingGroup ? "..." : "Add"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1233,20 +1558,31 @@ export default function ProductsTab() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showGroupsModal, setShowGroupsModal] = useState(false);
+
   const [search, setSearch] = useState("");
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from("products")
-      .select("*")
+      .select("*, product_groups(name)")
       .order("created_at", { ascending: false });
 
-    if (!error) setProducts(data || []);
+    if (!error) setProducts((data || []).map((p: any) => ({
+      ...p,
+      group_name: p.product_groups?.name ?? null,
+    })));
     setLoading(false);
   };
 
   const handleUpdate = (updated: any) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setProducts((prev) => prev.map((p) => {
+      if (p.id !== updated.id) return p;
+      const groupName = updated.group_id
+        ? (prev.find(x => x.id === updated.id)?.group_name ?? updated.group_name ?? null)
+        : null;
+      return { ...updated, group_name: groupName };
+    }));
   };
 
   useEffect(() => {
@@ -1262,6 +1598,14 @@ export default function ProductsTab() {
             {products.length} total
           </span>
         </h2>
+        <div className="flex items-center gap-2">
+          <button
+          onClick={() => setShowGroupsModal(true)}
+          className="flex items-center gap-2 bg-[var(--card-bg)] hover:bg-[var(--card-border)] text-[var(--text)] border border-[var(--card-border)] px-4 py-2 rounded-md text-sm font-medium transition-colors"
+        >
+          <Layers size={15} />
+          Manage Groups
+        </button>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 bg-[var(--rust)] hover:bg-[var(--dark-rust)] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -1269,6 +1613,8 @@ export default function ProductsTab() {
           <Plus size={15} />
           Add Product
         </button>
+        
+        </div>
       </div>
 
       <input
@@ -1307,6 +1653,9 @@ export default function ProductsTab() {
           onClose={() => setShowModal(false)}
           onSuccess={fetchProducts}
         />
+      )}
+      {showGroupsModal && (
+        <ManageGroupsModal onClose={() => setShowGroupsModal(false)} />
       )}
     </div>
   );
