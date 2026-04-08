@@ -24,6 +24,7 @@ function ProductPageContent() {
 
   const [showSun, setShowSun] = useState(false);
   const [showLight, setShowLight] = useState(false);
+  const [siblings, setSiblings] = useState<any[]>([]);
 
   const [activeImage, setActiveImage] = useState(0);
 
@@ -60,7 +61,18 @@ function ProductPageContent() {
         .single();
 
       if (error) console.error(error);
-      else setProduct(data);
+      else{
+        setProduct(data);
+        if (data?.group_id) {
+          const { data: sibs } = await supabase
+            .from("products")
+            .select("id, name, image_url, availability, stock")
+            .eq("group_id", data.group_id)
+            .eq("showing", true)
+            .order("name");
+          setSiblings(sibs ?? []);
+        }
+      } 
       setLoading(false);
     };
 
@@ -193,6 +205,41 @@ function ProductPageContent() {
               <p className="text-sm text-[var(--text)] leading-relaxed mb-6 italic">
                 {product.description}
               </p>
+            )}
+
+            {/* variant chips */}
+            {siblings.length > 1 && (
+              <div className="mb-6">
+                <p className="text-xs uppercase tracking-widest text-[var(--input-border)] mb-2">
+                  Varieties
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {siblings.map((sib) => {
+                    const isCurrent = sib.id === id;
+                    const unavailable = sib.stock === 0 || sib.availability !== "Ready Now";
+                    return (
+                      <Link
+                        key={sib.id}
+                        href={`/shop/${sib.id}?${searchParams.toString()}`}
+                        className={`flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full border text-xs transition-colors ${
+                          isCurrent
+                            ? "border-[var(--text)] bg-[var(--text)] text-[var(--header)]"
+                            : unavailable
+                              ? "border-[var(--card-border)] text-[var(--input-border)] opacity-50 hover:border-[var(--text)] hover:opacity-75"
+                              : "border-[var(--card-border)] text-[var(--text)] hover:border-[var(--text)]"
+                        }`}
+                      >
+                        <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-[var(--card-border)]">
+                          {sib.image_url && (
+                            <Image src={sib.image_url} alt={sib.name} fill className="object-cover" />
+                          )}
+                        </div>
+                        <span>{sib.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
             {/* price */}
