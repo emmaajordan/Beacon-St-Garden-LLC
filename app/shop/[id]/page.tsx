@@ -10,11 +10,19 @@ import { useCartStore } from "@/lib/store/cartStore";
 
 // Hover Information:
 // Edit descriptions here to update
-const sunBlurb = "Placeholder description of sun details";
-const lightBlurb = "Placeholder description of light details";
-const waterBlurb = "Placeholder description of water details";
+const sunBlurb = `Full sun: Plants need at least 6 hours of direct sun daily \n
+  Part sun: Plants thrive with between 3 and 6 hours of direct sun per day \n
+  Part shade: Plants require between 3 and 6 hours of sun per day, but need protection from intense mid-day sun \n
+  Full shade: Plants require less than 3 hours of direct sun per day`;
 
-const blurbStyle = "absolute bottom-10 right-0 text-xs max-w-sm p-2 rounded-md bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md z-10";
+const lightBlurb = `Bright Direct: 4 or more hours of direct sunlight \n
+  Bright Indirect: indirect sunlight for most of the day \n
+  Medium: 6-8ft away from light source \n 
+  Low: 8-10 ft from a light source`;
+
+const waterBlurb = `In general, water plants when the top 1-2in of soil is dry`;
+
+const blurbStyle = "absolute bottom-10 right-0 text-xs whitespace-pre-line max-w-md p-2 rounded-md bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md z-10";
 
 function ProductPageContent() {
   const { id } = useParams();
@@ -344,7 +352,7 @@ function ProductPageContent() {
                 </span>
                 <span className="flex gap-2 items-center text-sm text-[var(--text)]">
                   {product.sun}
-                  <div 
+                  <div
                     onMouseEnter={() => setShowSun(true)}
                     onMouseLeave={() => setShowSun(false)}
                   >
