@@ -368,11 +368,14 @@ function AddPostModal({
                       <div key={image.id} className="relative">
                         <div className="relative w-full aspect-square rounded-md overflow-hidden cursor-pointer active:scale-95 transition-transform duration-100">
                           <Image 
-                          src={image.url}
-                          alt="image preview"
-                          fill
-                          className="object-cover hover:scale-105 transition-transform duration-200 overflow-hidden"
-                          onClick={() => handleCopy(image.url)}
+                            src={image.url}
+                            alt="image preview"
+                            fill
+                            className="object-cover hover:scale-105 transition-transform duration-200 overflow-hidden"
+                            onClick={() => {
+                              const str = "![](" + image.url + ")";
+                              handleCopy(str)
+                            }}
                           />
                         </div>
                       </div>
@@ -639,7 +642,7 @@ function BlogPostRow({
                 <textarea
                   value={form.content}
                   onChange={(e) => set("content", e.target.value)}
-                  rows={4}
+                  rows={10}
                   className={`${styles.inputClass}`}
                 />
               </div>
@@ -731,11 +734,11 @@ function BlogPostRow({
             </div>
 
             {/* Excerpt */}
-            <div className="flex items-baseline justify-between py-2 mb-2 border-y border-dashed border-[var(--card-border)]">
+            <div className="flex flex-col gap-2 py-2 pb-4 mb-2 border-y border-dashed border-[var(--card-border)]">
               <span className="text-xs uppercase tracking-widest text-[var(--input-border)] flex-shrink-0 mr-4">
                 Excerpt
               </span>
-              <span className="text-sm text-[var(--text)] text-right">
+              <span className="text-sm text-[var(--text)]">
                 {post.excerpt}
               </span>
             </div>
@@ -745,11 +748,13 @@ function BlogPostRow({
               <p className="text-xs uppercase tracking-widest text-[var(--input-border)] flex-shrink-0 mr-4 pb-2">
                 Preview 
               </p>
-              <div className="bg-white/40 border border-(--card-border) p-6">
-                <h1 className="text-4xl font-bold py-1">{post.title}</h1>
-                <p className="text-sm text-(--input-border) py-2">{formatDate(post.created_at)}</p>
-                <hr className="mb-4 border-0 h-[2px] bg-(--card-border)" />
-                <MarkdownRenderer md={post.content}/>
+              <div className="flex flex-col items-center">
+                <div className="max-w-4xl bg-white/40 border border-(--card-border) p-6">
+                  <h1 className="text-4xl font-bold py-1">{post.title}</h1>
+                  <p className="text-sm text-(--input-border) py-2">{formatDate(post.created_at)}</p>
+                  <hr className="mb-4 border-0 h-[2px] bg-(--card-border)" />
+                  <MarkdownRenderer md={post.content}/>
+                </div>
               </div>
             </div>
           </div>
@@ -1010,7 +1015,7 @@ export default function BlogTab() {
   };
 
   const handleCopy = (url: string) => {
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText("![](" + url + ")");
     setCopyNotification(true);
     setTimeout(() => {
       setCopyNotification(false);

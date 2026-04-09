@@ -8,9 +8,9 @@ export default function MarkdownRenderer({ md }: { md: string }) {
       <ReactMarkdown 
         rehypePlugins={[rehypeHighlight]}
         components={{
-          h1: ({node, ...props}) => <h1 className="text-4xl font-bold mb-4 mt-6" {...props} />,
-          h2: ({node, ...props}) => <h2 className="text-3xl font-bold mb-3 mt-5" {...props} />,
-          h3: ({node, ...props}) => <h3 className="text-2xl font-bold mb-2 mt-4" {...props} />,
+          h1: ({node, ...props}) => <h1 className="text-3xl font-bold mb-4 mt-6" {...props} />,
+          h2: ({node, ...props}) => <h2 className="text-2xl font-bold mb-3 mt-5" {...props} />,
+          h3: ({node, ...props}) => <h3 className="text-xl font-bold mb-2 mt-4" {...props} />,
           hr: ({node, ...props}) => <hr className="my-2 border-0 h-[2px] bg-(--lines)" {...props} />,
           p: ({node, ...props}) => <p className="text-base leading-7 mb-4" {...props} />,
           a: ({node, ...props}) => <a className="text-(--teal) hover:underline" {...props} />,
@@ -25,7 +25,7 @@ export default function MarkdownRenderer({ md }: { md: string }) {
           img: ({node, ...props}) => (
             <img
               {...props}
-              className="max-h-100 w-auto rounded-lg my-2 justify-self-center"
+              className="max-h-100 w-auto rounded-sm my-2 justify-self-center"
             />
           ),
          }}
