@@ -17,7 +17,6 @@ export default function MarkdownRenderer({ md }: { md: string }) {
           ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 ml-4" {...props} />,
           ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 ml-4" {...props} />,
           li: ({node, ...props}) => <li className="mb-2" {...props} />,
-          // code: ({node, inline, ...props}) => inline ? <code className="bg-gray-200 px-2 py-1 rounded text-sm font-mono" {...props} /> : null,
           pre: ({node, ...props}) => <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4 font-mono text-sm" {...props} />,
           blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700 mb-4" {...props} />,
           table: ({node, ...props}) => <table className="w-full border-collapse border border-gray-300 mb-4" {...props} />,
@@ -26,10 +25,6 @@ export default function MarkdownRenderer({ md }: { md: string }) {
           img: ({node, ...props}) => (
             <img
               {...props}
-              // src={props.src}
-              // alt={props.alt || 'image'}
-              // height={400}
-              // width={600}
               className="max-h-100 w-auto rounded-lg my-2 justify-self-center"
             />
           ),
