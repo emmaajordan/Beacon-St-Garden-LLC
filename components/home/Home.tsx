@@ -71,7 +71,7 @@ function BlogPost({
 }) {
 
     return (
-        <div 
+        <div
             className="relative flex flex-col w-full sm:flex-row min-h-xl sm:h-64 shadow-md border border-(--footer) rounded-xl p-6 text-left gap-2 sm:gap-6 hover:shadow-lg cursor-pointer"
             onClick={onClick}
         >
@@ -122,6 +122,7 @@ export default function Home() {
     const [displayAll, setDisplayAll] = useState(false);
     const [posts, setPosts] = useState<any[]>([]);
     const [postIndex, setPostIndex] = useState(0);
+    const [cycling, setCycling] = useState(true);
 
     const handleBlogPrev = () => {
         const nextIndex = postIndex-1;
@@ -139,6 +140,7 @@ export default function Home() {
     };
 
     useEffect(() => {
+        console.log("fetching posts");
         const fetchPosts = async () => {
             const { data, error } = await supabase
             .from("blog_posts")
@@ -152,6 +154,16 @@ export default function Home() {
         
         fetchPosts();
     }, []);
+
+    useEffect(() => {
+        if (posts.length === 0 || !cycling) return;
+
+        const timer = setTimeout(() => {
+            handleBlogNext();
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [posts, postIndex, cycling]);
 
   return (
     <div className="">
@@ -214,7 +226,11 @@ export default function Home() {
         <div className="flex flex-col items-center max-w-6xl mx-auto text-center mt-8 mb-14">
             <h2 className="text-2xl sm:text-3xl font-medium">What's New at the Garden?</h2>
             <button
-                onClick={() => setDisplayAll((prev) => !prev)}
+                onClick={() => {
+                    setDisplayAll((prev) => !prev);
+                    if (displayAll) setCycling(false);
+                    else setCycling(true);
+                }}
                 className="text-(--input-border) text-sm text-left place-self-end p-2 mt-2 mr-14 cursor-pointer"
             >
                 {displayAll ? (
@@ -231,7 +247,7 @@ export default function Home() {
             </button>
             <div className="flex w-full items-center">
                 <button 
-                    onClick={handleBlogPrev} 
+                    onClick={handleBlogPrev}
                     className={`${(posts.length < 2 || displayAll) && "invisible"} cursor-pointer hover:scale-115`}
                 >
                     <ChevronLeft size={60} color="var(--lines)" />
@@ -267,12 +283,17 @@ export default function Home() {
                                 </div>
                             ) : (
                                 // Single Post
-                                <BlogPost 
-                                    post={posts[postIndex]}
-                                    index={postIndex+1}
-                                    total={posts.length}
-                                    onClick={() => router.push(`/blog/${posts[postIndex].id}?${new URLSearchParams(window.location.search)}`) } 
-                                />
+                                <div
+                                    onMouseEnter={() => setCycling(false)}
+                                    onMouseLeave={() => setCycling(true)}
+                                >
+                                    <BlogPost 
+                                        post={posts[postIndex]}
+                                        index={postIndex+1}
+                                        total={posts.length}
+                                        onClick={() => router.push(`/blog/${posts[postIndex].id}?${new URLSearchParams(window.location.search)}`) } 
+                                    />
+                                </div>
                             )}                        
                         </div>
                     )}
