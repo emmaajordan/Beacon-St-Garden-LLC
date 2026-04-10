@@ -213,7 +213,7 @@ export default function Home() {
                 <div className="flex flex-col min-w-fit basis-1/3 items-center px-4">
                     <span className="flex flex-col md:flex-row items-center md:gap-2">
                         <MapPin size={22} color="var(--teal)" />
-                        <p>Visit Us At The Farmers Market </p>
+                        <p>Visit Us During The Farmers Market </p>
                     </span>
                     <Link href="#market-info" className="text-base 2xl:text-lg text-(--teal) hover:underline">
                         See Details
@@ -317,10 +317,10 @@ export default function Home() {
                 <div className="relative flex flex-col basis-1/2 justify-between 2xl:text-lg gap-2 md:gap-0">
                     <h2 className="text-2xl sm:text-3xl font-medium">Visit Our Stand</h2>
                     <hr className="w-full mb-2 border-0 h-[3px] bg-(--card-border)" />
-                    <p>Find us at the <span className="font-semibold">Squirrel Hill Farmer's Market</span></p>
+                    <p>Find us down the street from the <span className="font-semibold">Squirrel Hill Farmer's Market</span></p>
                     <p>Sundays 9am-1pm</p>
                     <address className="not-italic">
-                        <p>5737 Beacon St</p>
+                        <p>On Beacon St Near Wightman St</p>
                         <p>Pittsburgh, PA 15217</p>
                     </address>
                     <p className="text-(--input-border) text-sm mb-1 md:mb-0">*Check our socials for updates on stand schedule</p>
