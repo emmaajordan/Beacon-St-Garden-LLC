@@ -22,16 +22,16 @@ export default function Footer() {
             </Link>
             <span className="text-gray-400">|</span>
             <span className="hidden md:inline">Follow Us</span>
-            <a
+            {/* <a
               href="https://www.instagram.com/crfrencho/"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[var(--rust)] transition-colors flex items-center"
             >
               <Instagram size={16} className="md:w-5 md:h-5"/>
-            </a>
+            </a> */}
             <a
-              href="https://www.instagram.com/crfrencho/"
+              href="https://www.facebook.com/profile.php?id=61587902987683"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[var(--rust)] transition-colors flex items-center"

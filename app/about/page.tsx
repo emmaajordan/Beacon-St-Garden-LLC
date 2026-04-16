@@ -12,7 +12,7 @@ const styles = {
 export default function AboutPage() {
   return (
     <div>
-      <div className="w-full h-64 bg-cover bg-center" style={{backgroundImage: "url('/flowers.jpg')"}}></div>
+      <div className="w-full h-64 bg-cover bg-center" style={{backgroundImage: "url('/seedlings.jpeg')"}}></div>
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-6">About Us</h1>
         

@@ -185,10 +185,10 @@ export default function ContactPage() {
             <h2 className={`${contactStyles.h2}`}>Farmers Market</h2>
             <DecLine />
           </span>
-          <p className="mb-2">Squirrel Hill Farmers Market</p>
+          <p className="mb-2">Down the street from the Squirrel Hill Farmers Market</p>
           <p className="mb-2">Sundays 9AM - 1PM</p>
           <address className="not-italic mb-8">
-            <p>5737 Beacon St</p>
+            <p>On Beacon St Near Wightman St</p>
             <p>Pittsburgh, PA 15217</p>
           </address>
 
@@ -197,17 +197,17 @@ export default function ContactPage() {
             <h2 className={`${contactStyles.h2}`}>Follow Us</h2>
             <DecLine />
           </span>
-          <a
-            href="https://www.instagram.com/beaconstgardens/"
+          {/* <a
+            href="https://www.facebook.com/profile.php?id=61587902987683"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--rust)] transition-colors flex items-center gap-2"
           >
             <Instagram size={15} />
             <span>@beaconstgardens</span>
-          </a>
+          </a> */}
           <a
-            href="https://www.instagram.com/beaconstgardens/"
+            href="https://www.facebook.com/profile.php?id=61587902987683"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--rust)] transition-colors flex items-center gap-2"
