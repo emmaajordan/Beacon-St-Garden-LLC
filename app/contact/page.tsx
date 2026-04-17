@@ -95,7 +95,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="bg-(--header) mx-auto px-4 md:px-8 py-6 md:py-10 max-w-5xl">
+    <div className="bg-(--header) mx-auto px-8 py-6 md:py-10 max-w-5xl">
       {/* page title */}
       <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text)] mb-2 text-center">
         Contact Us

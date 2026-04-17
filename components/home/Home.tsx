@@ -167,7 +167,7 @@ export default function Home() {
     }, [posts, postIndex, cycling]);
 
   return (
-    <div className="">
+    <div>
         {/* Banner Photo */}
         <div className="relative w-full">
             <div className="relative z-0 w-full h-64 md:h-full sm:aspect-3/1">
@@ -202,7 +202,6 @@ export default function Home() {
                     </Link>
                 </div>
                 <div className="flex flex-col min-w-fit basis-1/3 items-center px-4">
-                    {/* <span className="flex items-center gap-2"> */}
                     <span className="flex flex-col md:flex-row items-center md:gap-2">
                         <ShoppingBasket size={24} color="var(--teal)" />
                         <p>Order Online For Pickup</p>
@@ -216,7 +215,9 @@ export default function Home() {
                         <MapPin size={22} color="var(--teal)" />
                         <p>Visit Us During The Farmers Market </p>
                     </span>
-                    <Link href="#market-info" className="text-base 2xl:text-lg text-(--teal) hover:underline">
+                    <Link 
+                        onClick={() => {location.hash=""; location.hash="#visit-our-stand";}}
+                        href="#visit-our-stand" className="text-base 2xl:text-lg text-(--teal) hover:underline">
                         See Details
                     </Link>
                 </div>
@@ -224,7 +225,7 @@ export default function Home() {
         </div>
         
         {/* Blog Posts */}
-        <div className="flex flex-col items-center max-w-6xl mx-auto text-center mt-8 mb-14">
+        <div id="whats-new" className="flex flex-col items-center max-w-6xl mx-auto text-center mt-8 mb-14 scroll-mt-20">
             <h2 className="text-2xl sm:text-3xl font-medium">What's New at the Garden?</h2>
             <button
                 onClick={() => {
@@ -308,7 +309,7 @@ export default function Home() {
             </div>
         </div>
 
-        <div id="market-info" className="relative bg-(--secondary) py-12 px-6">
+        <div id="visit-our-stand" className="relative bg-(--secondary) py-12 px-6 scroll-mt-20">
             
             {/* Farmer's market stand information */}
             <div className="relative flex flex-col justify-between md:flex-row max-w-6xl mx-auto 2xl:max-w-[80vw] mb-12 gap-4 md:gap-10 2xl:gap-16">
