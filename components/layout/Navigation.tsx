@@ -57,7 +57,6 @@ export default function Navigation() {
           href="/"
           className="flex items-center space-x-0 md:space-x-3 hover:opacity-80 transition-opacity"
         >
-
           <img
             src="/logo.svg"
             alt="Logo"
@@ -129,7 +128,13 @@ export default function Navigation() {
           </button>
         </div>
       </div>
-
+      {/* backdrop */}
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
       {/* mobile dropdown */}
       {menuOpen && (
         <div className="md:hidden absolute right-4 top-[52px] bg-[var(--header)] border border-[var(--card-border)] rounded-lg shadow-lg overflow-hidden z-50 w-44">
