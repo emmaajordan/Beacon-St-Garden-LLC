@@ -233,7 +233,7 @@ export default function Home() {
                     if (displayAll) setCycling(false);
                     else setCycling(true);
                 }}
-                className="text-(--input-border) text-sm text-left place-self-end p-2 mt-2 mr-14 cursor-pointer"
+                className={`${posts.length < 2 && "invisible"} text-(--input-border) text-sm text-left place-self-end p-2 mt-2 mr-14 cursor-pointer`}
             >
                 {displayAll ? (
                     <div className="flex items-center gap-1">
