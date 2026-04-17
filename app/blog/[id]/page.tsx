@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
 import Link from 'next/link';
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 
@@ -51,10 +51,19 @@ export default function ProductPage() {
                     </Link>
                 </div>
             ) : (
-                <div className="w-full px-4 md:w-4xl md:px-0 py-6">
+                <div className="w-full md:max-w-4xl px-8 py-10">
+                    {/* back link */}
+                    <Link
+                        href='/#whats-new'
+                        className="inline-flex items-center gap-2 md:text-sm text-[var(--input-border)] hover:text-[var(--rust)] transition-colors mb-6"
+                    >
+                        <ArrowLeft size={15} />
+                        Home
+                    </Link>
+
                     <h1 className="text-4xl font-bold py-1">{post.title}</h1>
-                    <p className="text-sm text-(--input-border) py-2">{formatDate(post.created_at)}</p>
-                    <hr className="mb-4 border-0 h-[2px] bg-(--card-border)" />
+                    <p className="text-sm py-3">{formatDate(post.created_at)}</p>
+                    <hr className="border-0 h-[2px] bg-(--teal)/60 mb-6" />
                     <MarkdownRenderer md={post.content}/>
                 </div>
             )}
