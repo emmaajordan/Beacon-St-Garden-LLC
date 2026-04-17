@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { X, Info, Snail, Loader2 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/supabase";
-
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function CartPage() {
@@ -59,6 +59,7 @@ export default function CartPage() {
   const [stockError, setStockError] = useState<string[]>([]);
 
   const handleSubmit = async () => {
+
     if (!canSubmit) return;
     setSubmitting(true);
     setSubmitError("");
@@ -71,24 +72,50 @@ export default function CartPage() {
           product_id: item.id,
           quantity: item.quantity,
         }));
-      console.log("stock items being sent:", stockItems);
+        const { data: roleCheck } = await supabase.rpc('get_my_role');
+      console.log('my role:', roleCheck);
+      console.log("full anon key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+      // 1. save reservation + items via server-side API route (bypasses RLS issue)
+      const reservationRes = await fetch("/api/create-reservation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reservation: {
+            name: form.name,
+            email: form.email || null,
+            order_notes: orderNotes || null,
+            availability: dayTimes,
+            status: "unconfirmed",
+            final_cost: subtotal,
+          },
+          items: cartItems.map((item) => ({
+            product_id: item.id,
+            product_name: item.name,
+            price: item.price ?? 0,
+            quantity: item.quantity,
+          })),
+        }),
+      });
 
-      // atomically check and decrement stock
-      const { data: stockResult, error: stockError } = await supabase.rpc(
+      const reservationData = await reservationRes.json();
+      if (!reservationRes.ok) throw new Error(reservationData.error);
+
+      const reservation = { id: reservationData.id };
+
+      // 3. now decrement stock
+      const { data: stockResult, error: stockRpcError } = await supabase.rpc(
         "reserve_stock",
         { items: stockItems },
       );
-      console.log("stock result:", stockResult);
-      console.log("stock error:", stockError);
-      console.log("raw stock result:", JSON.stringify(stockResult));
-      console.log("success value:", stockResult?.success);
-      console.log("success type:", typeof stockResult?.success);
 
-      if (stockError) throw new Error(stockError.message);
+      if (stockRpcError) throw new Error(stockRpcError.message);
 
       if (!stockResult || stockResult.success === false) {
-        const errors = stockResult.errors as any[];
+        // stock check failed -> roll back the reservation rows
+        await supabase.from("reservation_items").delete().eq("reservation_id", reservation.id);
+        await supabase.from("reservations").delete().eq("id", reservation.id);
 
+        const errors = stockResult.errors as any[];
         const messages = errors.map((e: any) => {
           if (e.available === 0) {
             return `${e.product_name} is out of stock and has been removed from your cart`;
@@ -110,39 +137,7 @@ export default function CartPage() {
         return;
       }
 
-      console.log("reached reservation insert");
-      // save reservation to supabase
-      const { data: reservation, error: reservationError } = await supabase
-        .from("reservations")
-        .insert({
-          name: form.name,
-          email: form.email || null,
-          order_notes: orderNotes || null,
-          availability: dayTimes,
-          status: "unconfirmed",
-          final_cost: subtotal,
-        })
-        .select()
-        .single();
-
-      if (reservationError) throw new Error(reservationError.message);
-
-      // save reservation items
-      const { error: itemsError } = await supabase
-        .from("reservation_items")
-        .insert(
-          cartItems.map((item) => ({
-            reservation_id: reservation.id,
-            product_id: item.id,
-            product_name: item.name,
-            price: item.price ?? 0,
-            quantity: item.quantity,
-          })),
-        );
-
-      if (itemsError) throw new Error(itemsError.message);
-
-      // send confirmation email
+      // 4. send confirmation email
       if (form.email) {
         await fetch("/api/send-confirmation", {
           method: "POST",
@@ -161,6 +156,22 @@ export default function CartPage() {
       setSubmitted(true);
     } catch (err: any) {
       setSubmitError("Something went wrong. Please try again.");
+      // fire-and-forget alert email to admin
+      fetch("/api/send-error-alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          errorMessage: err.message,
+          occurredAt: new Date().toISOString(),
+          context: {
+            customerName: form.name,
+            customerEmail: form.email,
+            cartItems,
+            orderNotes,
+            availability: dayTimes,
+          },
+        }),
+      });
       console.error(err);
     }
 
