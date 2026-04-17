@@ -452,7 +452,7 @@ export default function ShopPage() {
               <div className="flex items-center pl-4 gap-4 flex-shrink-0">
                 <span className="hidden md:inline text-sm text-[var(--text)]">
                   {filteredProducts.length > 0
-                    ? `Showing ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} of ${filteredProducts.length} Products`
+                    ? `Showing ${filteredProducts.length} Products`
                     : ""}
                 </span>
                 <select
@@ -468,10 +468,10 @@ export default function ShopPage() {
               </div>
             </div>
 
-            {/*product grid*/}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {/*product grid - mobile (paginated)*/}
+            <div className="grid grid-cols-2 gap-3 md:hidden">
               {loading ? (
-                <div className="col-span-2 md:col-span-5 flex items-center justify-center py-12">
+                <div className="col-span-2 flex items-center justify-center py-12">
                   <Loader2
                     size={32}
                     className="animate-spin text-[var(--teal)]"
@@ -479,6 +479,22 @@ export default function ShopPage() {
                 </div>
               ) : (
                 currentProducts.map((product) => (
+                  <ProductCard key={product.id} {...product} />
+                ))
+              )}
+            </div>
+
+            {/*product grid - desktop (all products)*/}
+            <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {loading ? (
+                <div className="col-span-5 flex items-center justify-center py-12">
+                  <Loader2
+                    size={32}
+                    className="animate-spin text-[var(--teal)]"
+                  />
+                </div>
+              ) : (
+                filteredProducts.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))
               )}
@@ -499,9 +515,9 @@ export default function ShopPage() {
               </div>
             )}
 
-            {/*pagination*/}
+            {/*pagination - mobile only*/}
             {!loading && filteredProducts.length > 0 && (
-              <div className="flex items-center justify-center gap-4 mt-8">
+              <div className="flex md:hidden items-center justify-center gap-4 mt-8">
                 <button
                   onClick={() =>
                     setCurrentPage((prev) => Math.max(1, prev - 1))
