@@ -259,7 +259,7 @@ export default function ShopPage() {
               <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text)] mb-2">
                 Shop Beacon&nbsp;
                 <br className=" sm:hidden" />
-                St. Gardens
+                Street Gardens
               </h1>
               <p className="text-sm sm:text-base text-[var(--text)]">
                 Reserve fresh vegetables, herbs, and flowers{" "}
