@@ -22,7 +22,8 @@ const lightBlurb = `Bright Direct: 4 or more hours of direct sunlight \n
 
 const waterBlurb = `In general, water plants when the top 1-2in of soil is dry`;
 
-const blurbStyle = "absolute bottom-10 right-0 text-xs whitespace-pre-line max-w-md p-2 rounded-md bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md z-10";
+const blurbStyle =
+  "absolute bottom-10 right-0 text-xs whitespace-pre-line max-w-md p-2 rounded-md bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md z-10";
 
 function ProductPageContent() {
   const { id } = useParams();
@@ -69,7 +70,7 @@ function ProductPageContent() {
         .single();
 
       if (error) console.error(error);
-      else{
+      else {
         setProduct(data);
         if (data?.group_id) {
           const { data: sibs } = await supabase
@@ -80,7 +81,7 @@ function ProductPageContent() {
             .order("name");
           setSiblings(sibs ?? []);
         }
-      } 
+      }
       setLoading(false);
     };
 
@@ -123,7 +124,7 @@ function ProductPageContent() {
           <p className="text-xs uppercase tracking-widest text-[var(--input-border)] mb-2">
             {Array.isArray(product.category)
               ? product.category.join(" · ")
-              : product.category ?? "From the Garden"}  
+              : (product.category ?? "From the Garden")}
           </p>
           <h1 className="text-3xl font-semibold text-[var(--text)] mb-2">
             {product.name}
@@ -135,9 +136,14 @@ function ProductPageContent() {
           {/* image */}
           <div className="w-3/4 mx-auto sm:mx-0 sm:w-1/2 flex-shrink-0">
             {(() => {
-              const urls = Array.isArray(product.image_urls) && product.image_urls.length > 0
-                ? product.image_urls
-                : product.image_url ? [product.image_url] : [];
+              const urls = (
+                Array.isArray(product.image_urls) &&
+                product.image_urls.length > 0
+                  ? product.image_urls
+                  : product.image_url
+                    ? [product.image_url]
+                    : []
+              ) as string[];
               const src = urls[activeImage] ?? null;
               return (
                 <>
@@ -153,7 +159,13 @@ function ProductPageContent() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Image src="/no-image.png" alt="No Item" width={100} height={100} className="opacity-40" />
+                        <Image
+                          src="/no-image.png"
+                          alt="No Item"
+                          width={100}
+                          height={100}
+                          className="opacity-40"
+                        />
                       </div>
                     )}
                   </div>
@@ -170,7 +182,12 @@ function ProductPageContent() {
                               : "border-transparent hover:border-[var(--input-border)]"
                           }`}
                         >
-                          <Image src={url} alt={`View ${i + 1}`} fill className="object-cover" />
+                          <Image
+                            src={url}
+                            alt={`View ${i + 1}`}
+                            fill
+                            className="object-cover"
+                          />
                         </button>
                       ))}
                     </div>
@@ -187,7 +204,7 @@ function ProductPageContent() {
               <p className="text-xs uppercase tracking-widest text-[var(--input-border)] mb-2">
                 {Array.isArray(product.category)
                   ? product.category.join(" · ")
-                  : product.category ?? "From the Garden"}
+                  : (product.category ?? "From the Garden")}
               </p>
               <h1 className="text-4xl font-semibold text-[var(--text)] mb-3">
                 {product.name}
@@ -224,7 +241,8 @@ function ProductPageContent() {
                 <div className="flex flex-wrap gap-1.5">
                   {siblings.map((sib) => {
                     const isCurrent = sib.id === id;
-                    const unavailable = sib.stock === 0 || sib.availability !== "Ready Now";
+                    const unavailable =
+                      sib.stock === 0 || sib.availability !== "Ready Now";
                     return (
                       <Link
                         key={sib.id}
@@ -239,7 +257,12 @@ function ProductPageContent() {
                       >
                         <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-[var(--card-border)]">
                           {sib.image_url && (
-                            <Image src={sib.image_url} alt={sib.name} fill className="object-cover" />
+                            <Image
+                              src={sib.image_url}
+                              alt={sib.name}
+                              fill
+                              className="object-cover"
+                            />
                           )}
                         </div>
                         <span>{sib.name}</span>
@@ -373,7 +396,7 @@ function ProductPageContent() {
                 </span>
                 <span className="flex gap-2 items-center text-sm text-[var(--text)]">
                   {product.light}
-                  <div 
+                  <div
                     onMouseEnter={() => setShowLight(true)}
                     onMouseLeave={() => setShowLight(false)}
                   >
@@ -394,7 +417,7 @@ function ProductPageContent() {
                 </span>
                 <span className="flex gap-2 items-center text-sm text-[var(--text)]">
                   {product.watering}
-                  <div 
+                  <div
                     onMouseEnter={() => setShowWater(true)}
                     onMouseLeave={() => setShowWater(false)}
                   >
