@@ -256,12 +256,14 @@ export default function ShopPage() {
         <div className="relative h-full mx-auto px-8 flex items-center">
           <div className="bg-[var(--hero-square)] backdrop-blur-sm p-5 max-w-lg">
             <div className="border border-[var(--lines)] p-5">
-              <h1 className="text-xl md:text-3xl font-semibold text-[var(--text)] mb-2">
-                Shop Beacon Street Gardens
+              <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text)] mb-2">
+                Shop Beacon&nbsp;
+                <br className=" sm:hidden" />
+                St. Gardens
               </h1>
-              <p className="text-xs md:text-base text-[var(--text)]">
+              <p className="text-sm sm:text-base text-[var(--text)]">
                 Reserve fresh vegetables, herbs, and flowers{" "}
-                <br className="hidden md:block" />
+                <br className="hidden sm:block" />
                 fresh from our garden.
               </p>
             </div>
