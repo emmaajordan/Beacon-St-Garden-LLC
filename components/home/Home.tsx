@@ -46,7 +46,7 @@ const categories = [
     id: 4,
     href: "/shop",
     label: "Shop All",
-    image: "/sprout_info.png" 
+    image: "/banner_seeds.jpg" 
     },
 ];
 
