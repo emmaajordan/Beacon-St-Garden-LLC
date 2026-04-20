@@ -28,13 +28,13 @@ const categories = [
     id: 1,
     href: "/shop?category=Vegetable/Fruit",
     label: "Fruit & Vegetable Plants",
-    image: "/pepper-photo.jpg",
+    image: "/lunchbox-photo.png",
   },
   {
     id: 2,
     href: "/shop?category=Flowers",
     label: "Flowers",
-    image: "/colorful-flowers.jpg",
+    image: "/pansy_purple.jpg",
   },
   {
     id: 3,
