@@ -335,7 +335,7 @@ function AddPostModal({
                   {searchResults.map((p) => (
                     <button
                       key={p.id}
-                      onClick={() => handleCopy("placeholder link")}
+                      onClick={() => handleCopy("[](https://www.beaconstgardens.com/shop/" + p.id + ")")}
                       className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--card-bg)] transition-colors"
                     >
                       <span>{p.name}</span>
