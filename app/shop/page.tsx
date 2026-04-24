@@ -1,11 +1,11 @@
 "use client";
 
 import ProductCard from "@/components/shop/ProductCard";
+import ProductCardSkeleton from "@/components/shop/ProductCardSkeleton";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/supabase";
 import {
-  Loader2,
   SlidersHorizontal,
   ChevronUp,
   ChevronDown,
@@ -571,34 +571,24 @@ export default function ShopPage() {
 
             {/*product grid - mobile (paginated)*/}
             <div className="grid grid-cols-2 gap-3 md:hidden">
-              {loading ? (
-                <div className="col-span-2 flex items-center justify-center py-12">
-                  <Loader2
-                    size={32}
-                    className="animate-spin text-[var(--teal)]"
-                  />
-                </div>
-              ) : (
-                currentProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))
-              )}
+              {loading
+                ? Array.from({ length: 10 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))
+                : currentProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} />
+                  ))}
             </div>
 
             {/*product grid - desktop (all products)*/}
             <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {loading ? (
-                <div className="col-span-5 flex items-center justify-center py-12">
-                  <Loader2
-                    size={32}
-                    className="animate-spin text-[var(--teal)]"
-                  />
-                </div>
-              ) : (
-                filteredProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))
-              )}
+              {loading
+                ? Array.from({ length: 10 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))
+                : filteredProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} />
+                  ))}
             </div>
 
             {/*no results*/}
