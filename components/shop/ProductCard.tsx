@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/store/cartStore";
 
@@ -54,6 +55,7 @@ export default function ProductCard({
   const cartItem = items.find((i) => i.id === id);
   const quantity = cartItem?.quantity ?? 0;
   const router = useRouter();
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const handleReserve = () => addItem({ id, name, price, image_url, stock });
   const handleIncrease = () => updateQuantity(id, quantity + 1);
@@ -79,24 +81,28 @@ export default function ProductCard({
         }
       >
         {/* image */}
-        <div className="relative h-48 bg-[var(--card-border)]">
+        <div className="relative h-48 bg-[var(--card-border)] overflow-hidden">
+          {!imgLoaded && (
+            <div className="absolute inset-0 skeleton-shimmer z-10" />
+          )}
           {image_url ? (
             <Image
               src={image_url}
               alt={name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              placeholder="blur"
-              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRDZDRkNDIi8+PC9zdmc+"
+              sizes="(max-width: 768px) 50vw, 20vw"
+              className={`object-cover group-hover:scale-105 transition-all duration-300 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => setImgLoaded(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center z-20">
               <Image
                 src="/no-image.png"
                 alt="No Item"
                 width={80}
                 height={80}
                 className="opacity-40"
+                onLoad={() => setImgLoaded(true)}
               />
             </div>
           )}

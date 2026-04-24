@@ -56,3 +56,12 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--input-border);
 }
+
+@keyframes skeleton-pulse {
+  0%, 100% { background-color: var(--card-border); }
+  50% { background-color: var(--secondary); }
+}
+
+.skeleton-shimmer {
+  animation: skeleton-pulse 2.4s ease-in-out infinite;
+}
